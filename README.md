@@ -1,2 +1,2 @@
-# real-blog-Backend
- A MERN STACK PROJECT
+# Backend-realblog
+  nodejs backend for a blogging app
