@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer')
 const dotenv = require("dotenv")
-dotenv.config({ path: './config/config.env' });
+dotenv.config({ path: './config.env' });
 const { htmlToText } = require('html-to-text');
 const pug = require('pug')
 const { google } = require('googleapis');
