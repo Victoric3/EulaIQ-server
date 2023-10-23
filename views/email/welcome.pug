@@ -1,7 +1,11 @@
 extends baseEmail
+
 block content
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Dear #{firstName},
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Welcome to AlphaMagnet, your platform for sharing and monetizing your creative content! We are thrilled to have you join our community of talented creators and storytellers. Congratulations on taking the first step toward showcasing your literary and cinematic works to the world.
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | Dear #{firstName},
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | Welcome to #{process.env.SITE_NAME}, your platform for sharing and enjoying great blog content! We are thrilled to have you join our community of avid readers and bloggers. Congratulations on taking the first step toward discovering and sharing engaging stories.
+
   table.btn.btn-primary(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; box-sizing: border-box; width: 100%;", width="100%")
     tbody
       tr
@@ -10,26 +14,37 @@ block content
             tbody
               tr
                 td(style="font-family: sans-serif; font-size: 14px; vertical-align: top; border-radius: 5px; text-align: center; background-color: #ff3811;", valign="top", align="center", bgcolor="#ff3811")
-                  a(href=`${process.env.URL}/addstory`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
-                    | Create Ebook
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") At AlphaMagnet, we understand that every creation is unique, just like the creativity within you. Our platform is designed to empower you to create, share, and earn from your literary and cinematic masterpieces. Whether you're an established author or a budding filmmaker, we're here to support you every step of the way.
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Here's what you can expect from your AlphaMagnet experience:
+                  a(href=`${process.env.FRONTEND_BASEURL}/blogs`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
+                    | Explore Blogs
+
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | At #{process.env.SITE_NAME}, we believe that every blog is a unique experience, just like the creativity within you. Our platform is designed to empower you to discover, create, and enjoy a wide range of captivating blog posts. Whether you're an established blogger or a passionate reader, we're here to support you every step of the way.
+
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | Here's what you can expect from your #{process.env.SITE_NAME} experience:
+
   ul(style="list-style-type: disc; margin: 0 0 0 20px;")
-    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;") **Ebook Creators:**
-        | Easily craft and upload your ebooks. Share your literary works and earn commissions from sales.
-    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;") **Affiliate Marketing:**
-        | Become an affiliate marketer automatically. Promote your works and our platform to earn commissions up to 40% on sales.
-    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;") **Other Features:**
-        | Leverage our newsletter tool, connect with your audience, and maximize your earnings. Engage in referral contests and get expert support whenever needed.
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") To get started, simply  
-  a(href=`${process.env.FRONTEND_BASEURL}/signIn`, style="text-decoration: none; color: #ff3811;")
-    | login
-  |  to your AlphaMagnet account, where you'll find comprehensive guides and tutorials to help you navigate our platform. We're confident that you'll find everything you need to share and monetize your creative works. 
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Thank you for choosing AlphaMagnet to be a part of your creative journey. We can't wait to see the amazing content you'll share with the world. If you have any questions or need assistance, please don't hesitate to contact us at.
-  a(href="mailto:support@alphamagnet.mail", style="text-decoration: none; color: #ff3811;") support@alphamagnet.mail
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Once again, welcome to AlphaMagnet! We're excited to have you on board and look forward to helping you showcase your creativity and make a mark in the digital world.
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Best regards,
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Chukwujiobi Victor Ifeanyi
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") CEO, AlphaMagnet
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") alphamagnet3.io
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") support@alphamagnet.mail
+    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
+      | **Readers:**
+      | Discover and explore a diverse collection of blog posts on various topics.
+    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
+      | **Bloggers:**
+      | Create and share your own blog posts, connect with readers, and build your audience.
+    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
+      | **Interactivity:**
+      | Engage with the blogging community, leave comments, and start meaningful discussions.
+    li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
+      | **Support:**
+      | Get expert support whenever you need assistance with your blogging journey.
+
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | To get started, simply
+    a(href=`${process.env.FRONTEND_BASEURL}/signIn`, style="text-decoration: none; color: #ff3811;")
+      | login
+    | to your #{process.env.SITE_NAME} account, where you'll find a wide range of blogs to explore and the tools to create your own. We're confident that you'll find everything you need to dive into the world of blogging.
+
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+    | Thank you for choosing #{process.env.SITE_NAME} to be a part of your blogging journey. We can't wait to see the amazing blogs you'll discover and create. If you have any questions or need assistance, please don't hesitate to contact us at.
+    a(href=`mailto:${process.env.SUPPORT_EMAIL}`, style="text-decoration: none; color: #ff3811;")
+      | #{process.env.SUPPORT_EMAIL}
+

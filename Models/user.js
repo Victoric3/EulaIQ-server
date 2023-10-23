@@ -6,6 +6,9 @@ const bcrypt = require("bcryptjs")
 
 const jwt = require("jsonwebtoken")
 
+const dotenv = require("dotenv")
+dotenv.config({ path: './config/config.env' });
+
 const UserSchema = new mongoose.Schema({
 
     username : {
@@ -91,15 +94,13 @@ UserSchema.methods.generateJwtFromUser  = function(){
 
 UserSchema.methods.getResetPasswordTokenFromUser =function(){
 
-    const { RESET_PASSWORD_EXPIRE } = process.env
-
     const randomHexString = crypto.randomBytes(20).toString("hex")
 
     const resetPasswordToken = crypto.createHash("SHA256").update(randomHexString).digest("hex")
 
     this.resetPasswordToken = resetPasswordToken
     
-    this.resetPasswordExpire =Date.now()+ parseInt(RESET_PASSWORD_EXPIRE)
+    this.resetPasswordExpire = Date.now() + 1200000
 
     return resetPasswordToken
 }

@@ -7,6 +7,7 @@ const catchAsync = require("../Helpers/error/catchAsync");
 const { validateUserInput,comparePassword } = require("../Helpers/input/inputHelpers");
 const crypto = require("crypto")
 
+
 const getPrivateData = asyncErrorWrapper((req,res,next) =>{
 
     return res.status(200).json({
@@ -76,7 +77,7 @@ const login  = asyncErrorWrapper (async(req,res,next) => {
     //2 if email and password belongs to a user
     const user = await User.findOne(
         {$or: [{ email: identity }, 
-            { userName: identity }]})
+            { username: identity }]})
             .select('+password');
    
 
@@ -86,7 +87,7 @@ const login  = asyncErrorWrapper (async(req,res,next) => {
             errorMessage: 'your email or password is incorrect'
           })
         return}
-    if(user.emailStatus === 'pending'){
+    if(user.emailStatus == 'pending'){
         const verificationToken = user.createToken()
         await user.save()
         new Email(user, verificationToken).sendConfirmEmail()
@@ -96,6 +97,7 @@ const login  = asyncErrorWrapper (async(req,res,next) => {
         })
         return
     }
+   
     sendToken(user ,200,res, 'successful');
 
     
@@ -105,17 +107,16 @@ const login  = asyncErrorWrapper (async(req,res,next) => {
 
 
 const forgotpassword  = asyncErrorWrapper( async (req,res,next) => {
-    const {URI,EMAIL_ACCOUNT} = process.env ; 
+    const {URL,EMAIL_ACCOUNT} = process.env ; 
 
     const resetEmail = req.body.email  ;
 
     const user = await User.findOne({email : resetEmail})
-
     if(!user ) {
         return res.status(400)
         .json({
             success: true,
-            message: "There is no user with that email"
+            errorMessage: "There is no user with that email"
         })
     }
 
@@ -123,11 +124,11 @@ const forgotpassword  = asyncErrorWrapper( async (req,res,next) => {
 
     await user.save()  ;
 
-    const resetPasswordUrl = `${URI}/resetpassword?resetPasswordToken=${resetPasswordToken}`
+    const resetPasswordUrl = `${URL}/resetpassword?resetPasswordToken=${resetPasswordToken}`
 
     try {
 
-        new Email(resetEmail, resetPasswordUrl).sendPasswordReset()
+        new Email(user, resetPasswordUrl).sendPasswordReset()
 
         return res.status(200)
         .json({
@@ -156,11 +157,11 @@ const forgotpassword  = asyncErrorWrapper( async (req,res,next) => {
 
 
 const resetpassword  =asyncErrorWrapper(  async (req,res,next) => {
-
+    
     const newPassword = req.body.newPassword || req.body.password
-
+    
     const {resetPasswordToken} = req.query
-
+    
     try{
         if(!resetPasswordToken) {
             res.status(400).json({
@@ -171,12 +172,9 @@ const resetpassword  =asyncErrorWrapper(  async (req,res,next) => {
         }
         
         const user = await User.findOne({
-            
             resetPasswordToken :resetPasswordToken ,
             resetPasswordExpire : { $gt: Date.now() }
-            
         })
-        
         if(!user) {
             res.status(400).json({
                 status: 'failed',
@@ -184,7 +182,6 @@ const resetpassword  =asyncErrorWrapper(  async (req,res,next) => {
             })
             return
         }
-        
         
         user.password = newPassword ; 
         
@@ -194,8 +191,8 @@ const resetpassword  =asyncErrorWrapper(  async (req,res,next) => {
         await user.save() ; 
         
         return res.status(200).json({
-            success :true ,
-            message : "Reset Password access successfull"
+            success : 'success' ,
+            message : "Reset Password successfull"
         })
         
     }catch(err){

@@ -1,7 +1,9 @@
 extends baseEmail
 
 block content
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Thank you for creating an account with AlphaMagnet3! To complete your registration, please click the button below:
+  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+  | Thank you for creating an account with #{process.env.SITE_NAME}!
+  | To complete your registration, please click the button below:
   table.btn.btn-primary(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; box-sizing: border-box; width: 100%;", width="100%")
     tbody
       tr
@@ -10,14 +12,16 @@ block content
             tbody
               tr
                 td(style="font-family: sans-serif; font-size: 14px; vertical-align: top; border-radius: 5px; text-align: center; background-color: #ff3811;", valign="top", align="center", bgcolor="#ff3811")
-                  a(href=`${process.env.URL}/confirmEmailAndSignUp/${url}`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
+                  a(href= `${process.env.URL}/confirmEmailAndSignUp/${url}`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
                     | Confirm Email
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") If you did not create an account on AlphaMagnet3, please ignore this email.
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") For security reasons, this confirmation link will expire in 20 minutes.
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Thank you for choosing AlphaMagnet3! If you encounter any issues or need further assistance, please don't hesitate to contact us at
-  a(href="mailto:support@alphamagnet3.io", style="text-decoration: none; color: #ff3811;") support@alphamagnet3.io
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Best regards,
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") Chukwujiobi Victor Ifeanyi
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") CEO, AlphaMagnet3
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") alphamagnet3.io
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;") support@alphamagnet3.io
+      p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+        | If you did not create an account on #{process.env.SITE_NAME}, please ignore this email.
+      p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+        | For security reasons, this confirmation link will expire in 20 minutes.
+      p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+        | Thank you for choosing #{process.env.SITE_NAME}!
+        | If you encounter any issues or need further assistance, please don't hesitate to contact us at
+      p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
+        a(href= `mailto:${process.env.SUPPORT_EMAIL}`)
+          | #{process.env.SUPPORT_EMAIL}
+

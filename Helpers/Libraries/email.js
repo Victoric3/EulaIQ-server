@@ -1,34 +1,44 @@
 const nodemailer = require('nodemailer')
-// const dotenv = require("dotenv")
-// dotenv.config({ path: '../../config/config.env' })
-// const user = process.env.EMAIL_USERNAME
-// const password =process.env.EMAIL_PASSWORD
+const dotenv = require("dotenv")
+dotenv.config({ path: './config/config.env' });
 const { htmlToText } = require('html-to-text');
 const pug = require('pug')
-// console.log(user, password);
+const { google } = require('googleapis');
+
+
+
 // new Email(user, Url)
 module.exports = class Email{
     constructor(user, url){
         this.to = user.email;
-        this.firstName = user.firstName;
-        // this.from = ` ${process.env.NAME} <${process.env.EMAIL_ACCOUNT}>`
-        this.from = `AutoBlog <chukwujiobi@victor.io>`
+        this.firstName = user.username;
+        this.from = ` ${process.env.SITE_NAME} <${process.env.EMAIL_ACCOUNT}>`
         this.url = url;
     }
     newTransport(){
-        if(process.env.NODE_ENV==='production'){
-            return 1;
+        if(process.env.NODE_ENV==='development'){
+            return nodemailer.createTransport({
+                host: 'sandbox.smtp.mailtrap.io',
+                port: 465,
+                secure: false,
+                auth: {
+                    user: process.env.EMAIL_USERNAME_DEV,
+                    pass: process.env.EMAIL_PASS_DEV
+                },
+            })
         }
-        
+        if(process.env.NODE_ENV==='production'){
         return nodemailer.createTransport({
-            host: 'sandbox.smtp.mailtrap.io',
-            port: 465,
-            secure: false,
-            auth: {
-                user: 'e70b8baf7cb678',
-                pass: '1f8adac4b2b33a'
-            },
-        })
+          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth:{
+              user: process.env.EMAIL_ACCOUNT,
+              pass: process.env.EMAIL_PASS,
+            }
+        
+        });}
     }
     async send(template, subject){
         // render pug template
@@ -52,12 +62,12 @@ module.exports = class Email{
 
     }
     async sendWelcome(){
-        await this.send('welcome', 'welcome to Alphamagnet')
+        await this.send('welcome', `welcome to ${process.env.SITE_NAME}`)
     }
     async sendPasswordReset(){
-        await this.send('passwordReset', 'Alphamagnet, Password reset email')
+        await this.send('passwordReset', `${process.env.SITE_NAME}, Password reset email`)
     }
     async sendConfirmEmail(){
-        await this.send('confirmEmail', 'Alphamagnet, confirm your email')
+        await this.send('confirmEmail', `${process.env.SITE_NAME}, confirm your email`)
     }
 }
