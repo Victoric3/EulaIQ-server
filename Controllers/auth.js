@@ -258,7 +258,7 @@ const resendVerificationToken = catchAsync(async(req, res, next) => {
         message: "An email has been sent to your inbox for verification. Please proceed to verify your email.",
       });
  })
-
+ 
 module.exports ={
     register,
     login,

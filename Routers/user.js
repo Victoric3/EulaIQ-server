@@ -1,16 +1,16 @@
 const express = require("express")
 
-const imageUpload = require("../Helpers/Libraries/imageUpload");
 
 const {profile,editProfile,changePassword,addStoryToReadList,readListPage} = require("../Controllers/user");
 const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
+const handleImageUpload = require("../Helpers/Libraries/handleImageUpload");
 
 
-const router = express.Router() ;
+const router = express.Router();
 
 router.get("/profile",getAccessToRoute ,profile)
 
-router.post("/editProfile",[getAccessToRoute ,imageUpload.single("photo")],editProfile)
+router.post("/editProfile",[getAccessToRoute, handleImageUpload] ,editProfile) //image
 
 router.put("/changePassword",getAccessToRoute,changePassword)
 

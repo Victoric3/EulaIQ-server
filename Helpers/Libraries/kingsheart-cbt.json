@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "kingsheart-cbt",
+  "private_key_id": "838d1e282b46a32c0780e24efba1e15af54451a9",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4tP1QuDEpfzrG\nkBR3wFnoplZhV4Gnj+HU7WW4CBjc6zEOP5f2uYhvOIW28LdHSZ7WU6yMkitFDQYj\nshUt/PYrRq+vOqm+GNUHYgG27DouGHvACXDbb1mv3KIhyyT9WfD6QfW+NFh3ZEG2\nxF5WC0Wj3BsfroUhEokrocuvFaI1Jurq5Ay/USagrvRVNoVlBq3pYw4xrkjvcWDO\nrfhNdd4+HB/42B2kzNSEwIyJlAu2q41oiLcSp6cqWV5SGFBJSpwNZI4Ir9j3uV7r\nifAvJvK+sBV0rlUCEy3U1XWXDJ8EDCAKISvmR16+AqGTnHWiboPm7D6SqDnsAtKL\nZb8x0MVJAgMBAAECggEAOO07N3IVYNNAI6uLS18itrPxYn3sTV7ofM4P8Bi6xPfN\nvjT2WonTFWhHudrVuehkRm0yfH6eTGFXt4+uvGY+3paiFfEQGLEhku1vVtfWlJdi\nKI0gVdkrPKrU43JvO5BJV3AV06HhdCaXpENASeeedoKjb2/Dwy4pzaNHmfYicJu/\ne5VwXcOk7kjmErtcFEsCnRVsG7ZPGE8+tSizcD1QgYplME/0GYIhPyNoKgMBKaw4\nlPSp4oCP+uSoDIwWmAi96EHCPU/Df/5WgX9TMfUPr3q/d0W24zQeVR14oNyi2qVh\nfHts4kcEAQDrW0pzN92Ap5Pgo0ZDNw3HbgDtLC1KgwKBgQD1fz8+/dRSrR2QjPiM\ndfN386Z4m3Pl6/aoY2zUG1SluNDZpgAxHHJg5ENLxkTXsqz0wbA7oK+FySm2KF6A\nkpeR75gxca1O4G03D1hDeinfIAZ/k5nS4YHMu8k7vC3j8L8EDvfRsTN5IDRjEhD8\ngbNBJTqQYXHsTJlCIIZ0RCsWhwKBgQDAm/PXOio6Rw4bFM7Nj5FByKQwvIfUISBa\nYkakCPRTXDL87lQu2dU5NuRkUKtF07NvXP8KBybVx06Orc1QsPKGfqiokiSajtE8\nInZFdzR0bMPSX3pK+FihS8w7F8KKY+Memzznbvfr4JMIM2KrHgXSqJemtmgZrgaa\np5cAy6lprwKBgHDFcC8meJc18MPLDg2vzRSH9yul9TpkB11YttBEccDiwgWI7MOi\nlqQNlyBCxrLy3+Ja6vKpIJfrTV7g8nBLZpbiId5sorj9/Q1y3g+5GWzmkDWgfuPR\nNUfv50OqcMYpfAWIPqyzorp8YbQ0w1rK1aYSTPGv4Z4znZ8zw6+69LQXAoGAPkjw\nRHRZvXjG1fkXmx/HIFfKyLvezLldpfzLzTXcFKznDCXh8TieHB9lIg94I19/Ug7n\npo2DgHQwMjGACI0AEIAa+FAyKAzxGpomVvZibxfRB1G60U2YE6jYRW+8iFYe1wHq\nYwjegVehFHDRgnZ1+ZZtXAr2hP9iwVZanXY+tZ8CgYEA02Av2jQ9Xq2vDMBF7QSg\nNJTdCOWbqJK/jqCFOrh1CLDfUL2V9QxuHbsJ+URR/9pP4gMUvr3GMFQE3iVIGHGQ\nsr0SSB3mP9lrKU+ZD1UsV2Ec2maGWdvobiXaYTfpVvTbR5Wma/1V43wqY0ZKIpqY\nluyjXtwPRE9Ivq3kcWj7XvQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "kingsheart@kingsheart-cbt.iam.gserviceaccount.com",
+  "client_id": "104386306298954690493",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/kingsheart%40kingsheart-cbt.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

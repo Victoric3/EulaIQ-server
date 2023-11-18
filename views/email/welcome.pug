@@ -1,10 +1,13 @@
+Certainly! Here's a revised version of your email content with a focus on helping users prepare for exams through CBT tests:
+
+```pug
 extends baseEmail
 
 block content
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
     | Dear #{firstName},
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Welcome to #{process.env.SITE_NAME}, your platform for sharing and enjoying great blog content! We are thrilled to have you join our community of avid readers and bloggers. Congratulations on taking the first step toward discovering and sharing engaging stories.
+    | Welcome to #{process.env.SITE_NAME}, your ultimate platform for exam preparation through Computer-Based Testing (CBT)! We're excited to have you on board as you embark on a journey to excel in your exams.
 
   table.btn.btn-primary(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; box-sizing: border-box; width: 100%;", width="100%")
     tbody
@@ -14,37 +17,35 @@ block content
             tbody
               tr
                 td(style="font-family: sans-serif; font-size: 14px; vertical-align: top; border-radius: 5px; text-align: center; background-color: #ff3811;", valign="top", align="center", bgcolor="#ff3811")
-                  a(href=`${process.env.FRONTEND_BASEURL}/blogs`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
-                    | Explore Blogs
+                  a(href=`${process.env.FRONTEND_BASEURL}/cbt-tests`, target="_blank", style="border: solid 1px #ff3811; border-radius: 5px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-decoration: none; text-transform: capitalize; background-color: #ff3811; border-color: #ff3811; color: #ffffff;")
+                    | Explore CBT Tests
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | At #{process.env.SITE_NAME}, we believe that every blog is a unique experience, just like the creativity within you. Our platform is designed to empower you to discover, create, and enjoy a wide range of captivating blog posts. Whether you're an established blogger or a passionate reader, we're here to support you every step of the way.
+    | At #{process.env.SITE_NAME}, we are dedicated to providing you with a comprehensive and effective way to prepare for your exams using state-of-the-art Computer-Based Testing. Prepare yourself for success with our CBT tests designed to enhance your exam-taking experience.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Here's what you can expect from your #{process.env.SITE_NAME} experience:
+    | Here's what you can expect from your #{process.env.SITE_NAME} CBT experience:
 
   ul(style="list-style-type: disc; margin: 0 0 0 20px;")
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
-      | **Readers:**
-      | Discover and explore a diverse collection of blog posts on various topics.
+      | **Customized Practice:**
+      | Access a variety of CBT tests tailored to your exam needs.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
-      | **Bloggers:**
-      | Create and share your own blog posts, connect with readers, and build your audience.
+      | **Realistic Exam Simulations:**
+      | Experience realistic exam scenarios to boost your confidence.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
-      | **Interactivity:**
-      | Engage with the blogging community, leave comments, and start meaningful discussions.
+      | **Performance Analytics:**
+      | Track your progress and identify areas for improvement.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
-      | **Support:**
-      | Get expert support whenever you need assistance with your blogging journey.
+      | **Exam Readiness:**
+      | Feel fully prepared and ready to excel on exam day.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
     | To get started, simply
     a(href=`${process.env.FRONTEND_BASEURL}/signIn`, style="text-decoration: none; color: #ff3811;")
       | login
-    | to your #{process.env.SITE_NAME} account, where you'll find a wide range of blogs to explore and the tools to create your own. We're confident that you'll find everything you need to dive into the world of blogging.
+    | to your #{process.env.SITE_NAME} account, where you'll find a wealth of CBT tests to help you master your exam topics.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Thank you for choosing #{process.env.SITE_NAME} to be a part of your blogging journey. We can't wait to see the amazing blogs you'll discover and create. If you have any questions or need assistance, please don't hesitate to contact us at.
-    a(href=`mailto:${process.env.SUPPORT_EMAIL}`, style="text-decoration: none; color: #ff3811;")
-      | #{process.env.SUPPORT_EMAIL}
-
+    | Thank you for choosing #{process.env.SITE_NAME} as your go-to platform for CBT exam preparation. We're here to support you every step of the way. If you have any questions or need assistance, please don't hesitate to contact us at
+    a(href=`mailto:${process.env.EMAIL_ACCOUNT}`, style="text-decoration: none; color: blue")

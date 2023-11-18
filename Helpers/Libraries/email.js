@@ -3,8 +3,6 @@ const dotenv = require("dotenv")
 dotenv.config({ path: './config.env' });
 const { htmlToText } = require('html-to-text');
 const pug = require('pug')
-const { google } = require('googleapis');
-
 
 
 // new Email(user, Url)

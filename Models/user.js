@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
     },
     photo : {
         type : String,
-        default : "user.png"
+        default : "https://drive.google.com/file/d/1RhzpswcIei9GQ1ecuhjkSRGJwIeWHHf1/view?usp=drive_link"
     },
     email : {
         type: String ,
