@@ -1,5 +1,6 @@
 // uploadMiddleware.js
 const { imageUpload, uploadToDrive } = require("./imageUpload");
+const deleteImageFile = require("./deleteImageFile");
 
 const handleImageUpload = async (req, res, next) => {
   try {
@@ -10,6 +11,12 @@ const handleImageUpload = async (req, res, next) => {
     // Check if a valid folder ID is obtained
     if (!folderId) {
       return next(new Error('Invalid folder URL'));
+    }
+
+    // Check if there is a file in the request
+    if (!req.file) {
+      // No file provided, continue to the next middleware
+      return next();
     }
 
     // Upload the image to Google Drive
@@ -26,6 +33,10 @@ const handleImageUpload = async (req, res, next) => {
       // Attach the fileLink to the request object for later use in the route handler
       req.fileLink = fileLink;
 
+      // Delete the locally uploaded file
+      deleteImageFile(req);
+
+      // Continue to the next middleware
       next();
     });
   } catch (error) {

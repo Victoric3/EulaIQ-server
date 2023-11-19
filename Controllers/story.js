@@ -5,19 +5,24 @@ const {searchHelper, paginateHelper} =require("../Helpers/query/queryHelpers")
 
 
 const addStory = asyncErrorWrapper(async (req, res, next) => {
-    const { title, content } = req.body;
+    const { title, content, exam } = req.body;
 
     // Calculate readtime based on word count
     var wordCount = content?.trim().split(/\s+/).length;
     let readtime = Math.floor(wordCount / 200);
-
+    const imageLinks = {
+        topic: "https://drive.google.com/uc?id=1JAsRRG2_MkJuSkk1f1Jt6HxXeBNqMdpw",
+        custom: "https://drive.google.com/uc?id=1JAsRRG2_MkJuSkk1f1Jt6HxXeBNqMdpw",
+        utme: "https://drive.google.com/uc?id=19mQix_iJwOmDqbLy2zLaA6Ug6cB5t8db"
+    }
+    
     try {
       // Access req.fileLink, which was attached by the middleware
       const newStory = await Story.create({
         title,
         content,
         author: req.user._id,
-        image: req.fileLink,
+        image: req.fileLink || imageLinks[exam] || "https://drive.google.com/uc?id=1_t0-530wnduSmjJbvdCj-QlhzCgmzszg",
         readtime,
       });
 
