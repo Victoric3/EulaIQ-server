@@ -18,25 +18,33 @@ const editProfile = asyncErrorWrapper(async (req, res, next) => {
 
     const { email, username } = req.body
 
-    const user = await User.findByIdAndUpdate(req.user.id, {
-        email, username,
-        photo: req.fileLink
-    },
+    try{
+
+        const user = await User.findByIdAndUpdate(req.user.id, {
+            email, username,
+            photo: req.fileLink
+        },
         {
             new: true,
             runValidators: true
         })
-
-    return res.status(200).json({
-        success: true,
-        data: user
-
+        
+        return res.status(200).json({
+            status: 'success',
+            message: 'Profile updated successfully'
+            
+        })
+    }catch(e){
+        return res.status(500).json({
+            status: 'fail',
+            errorMessage: 'internal server error'
+        })
+    }
+        
     })
-
-})
-
-
-const changePassword = asyncErrorWrapper(async (req, res, next) => {
+    
+    
+    const changePassword = asyncErrorWrapper(async (req, res, next) => {
 
     const { newPassword, oldPassword } = req.body
 

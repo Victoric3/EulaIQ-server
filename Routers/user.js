@@ -6,6 +6,7 @@ const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
 const handleImageUpload = require("../Helpers/Libraries/handleImageUpload");
 
 
+
 const router = express.Router();
 
 router.get("/profile",getAccessToRoute ,profile)

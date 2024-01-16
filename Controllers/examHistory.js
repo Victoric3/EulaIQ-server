@@ -10,7 +10,7 @@ exports.createExamHistory = async (req, res) => {
       exam,
       totalScore,
       totalQuestions,
-      subjectScores,
+      subjectScores
     });
 
     const savedExamHistory = await newExamHistory.save();

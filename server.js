@@ -2,6 +2,7 @@ const express = require("express")
 const dotenv = require("dotenv")
 const cors = require("cors")
 const path = require("path")
+const rateLimit = require('express-rate-limit');
 
 const IndexRoute = require("./Routers/index")
 const connectDatabase = require("./Helpers/database/connectDatabase")
@@ -14,6 +15,14 @@ connectDatabase()
 const app = express() ;
 
 app.use(express.json())
+rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 1000, // 1000 requests per minute
+    keyGenerator: (req) => {
+      // Use the user object to identify the user
+      return req.user
+    },
+  });
 app.use(cors())
 app.get('/', (req, res) => {
     res.send('server successfully running');

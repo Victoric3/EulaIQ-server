@@ -10,10 +10,11 @@ const addStory = asyncErrorWrapper(async (req, res, next) => {
     // Calculate readtime based on word count
     var wordCount = content?.trim().split(/\s+/).length;
     let readtime = Math.floor(wordCount / 200);
+
     const imageLinks = {
-        topic: "https://drive.google.com/uc?id=1JAsRRG2_MkJuSkk1f1Jt6HxXeBNqMdpw",
-        custom: "https://drive.google.com/uc?id=1JAsRRG2_MkJuSkk1f1Jt6HxXeBNqMdpw",
-        utme: "https://drive.google.com/uc?id=19mQix_iJwOmDqbLy2zLaA6Ug6cB5t8db"
+        topic: "https://i.ibb.co/R752vNH/topic.jpg",
+        custom: "https://i.ibb.co/9G52TcQ/custom.jpg",
+        utme: "https://i.ibb.co/tKKz0SP/jambImg.png"
     }
     
     try {
@@ -22,7 +23,7 @@ const addStory = asyncErrorWrapper(async (req, res, next) => {
         title,
         content,
         author: req.user._id,
-        image: req.fileLink || imageLinks[exam] || "https://drive.google.com/uc?id=1_t0-530wnduSmjJbvdCj-QlhzCgmzszg",
+        image: req.fileLink || imageLinks[exam] || "https://i.ibb.co/Jx8zhtr/story.jpg",
         readtime,
       });
 

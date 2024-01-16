@@ -1,13 +1,10 @@
-Certainly! Here's a revised version of your email content with a focus on helping users prepare for exams through CBT tests:
-
-```pug
 extends baseEmail
 
 block content
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
     | Dear #{firstName},
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Welcome to #{process.env.SITE_NAME}, your ultimate platform for exam preparation through Computer-Based Testing (CBT)! We're excited to have you on board as you embark on a journey to excel in your exams.
+    | Welcome to #{process.env.SITE_NAME}, We're excited to have you on board as you embark on a journey to excel in your academics.
 
   table.btn.btn-primary(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; box-sizing: border-box; width: 100%;", width="100%")
     tbody
@@ -21,24 +18,24 @@ block content
                     | Explore CBT Tests
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | At #{process.env.SITE_NAME}, we are dedicated to providing you with a comprehensive and effective way to prepare for your exams using state-of-the-art Computer-Based Testing. Prepare yourself for success with our CBT tests designed to enhance your exam-taking experience.
+    | At #{process.env.SITE_NAME}, we are dedicated to providing you with a comprehensive and effective way to prepare for your exams using state-of-the-art Computer-Based Testing, advice and animated explanatory videos. Prepare yourself for success with our CBT tests designed to enhance your exam-taking experience.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Here's what you can expect from your #{process.env.SITE_NAME} CBT experience:
+    | Here's what you can expect from your #{process.env.SITE_NAME} educational experience:
 
   ul(style="list-style-type: disc; margin: 0 0 0 20px;")
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
       | **Customized Practice:**
-      | Access a variety of CBT tests tailored to your exam needs.
+      | Access a variety of CBT tests tailored to your exam needs, take your tests exactly how you want them.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
       | **Realistic Exam Simulations:**
-      | Experience realistic exam scenarios to boost your confidence.
+      | Experience realistic exam scenarios to boost your confidence, get experience on what its like to take the actual exam.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
       | **Performance Analytics:**
       | Track your progress and identify areas for improvement.
     li(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 10px;")
-      | **Exam Readiness:**
-      | Feel fully prepared and ready to excel on exam day.
+      | **Animated Explanatory Videos**
+      | Understand Deep concepts using animated videos.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
     | To get started, simply
@@ -47,5 +44,5 @@ block content
     | to your #{process.env.SITE_NAME} account, where you'll find a wealth of CBT tests to help you master your exam topics.
 
   p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;")
-    | Thank you for choosing #{process.env.SITE_NAME} as your go-to platform for CBT exam preparation. We're here to support you every step of the way. If you have any questions or need assistance, please don't hesitate to contact us at
+    | Thank you for choosing #{process.env.SITE_NAME}. We're here to support you every step of the way. If you have any questions or need assistance, please don't hesitate to contact us at
     a(href=`mailto:${process.env.EMAIL_ACCOUNT}`, style="text-decoration: none; color: blue")

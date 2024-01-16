@@ -19,6 +19,8 @@ const getPrivateData = asyncErrorWrapper((req,res,next) =>{
 
 })
 
+
+
 const register = async  (req,res,next) => {
 
     const { username, email, password} = req.body;
@@ -43,7 +45,8 @@ const register = async  (req,res,next) => {
         const newUser = await User.create({
             username,
             email,
-            password
+            password,
+            photo: "https://i.ibb.co/rx8wvzC/default-1.jpg"
         })
         const verificationToken = newUser.createToken()
         await newUser.save()
@@ -62,6 +65,7 @@ const register = async  (req,res,next) => {
   
 
 }
+
 
 const login  = asyncErrorWrapper (async(req,res,next) => {
 
@@ -108,27 +112,27 @@ const login  = asyncErrorWrapper (async(req,res,next) => {
 
 const forgotpassword  = asyncErrorWrapper( async (req,res,next) => {
     const {URL,EMAIL_ACCOUNT} = process.env ; 
-
+    
     const resetEmail = req.body.email  ;
-
+    try {
+    
     const user = await User.findOne({email : resetEmail})
     if(!user ) {
         return res.status(400)
         .json({
             success: true,
-            errorMessage: "There is no user with that email"
+            errorMessage: "There is no user with this email"
         })
     }
 
     const resetPasswordToken = user.getResetPasswordTokenFromUser();
 
-    await user.save()  ;
+    await user.save();
 
     const resetPasswordUrl = `${URL}/resetpassword?resetPasswordToken=${resetPasswordToken}`
 
-    try {
 
-        new Email(user, resetPasswordUrl).sendPasswordReset()
+        await new Email(user, resetPasswordUrl).sendPasswordReset()
 
         return res.status(200)
         .json({
@@ -139,11 +143,6 @@ const forgotpassword  = asyncErrorWrapper( async (req,res,next) => {
     }
 
     catch(error ) {
-
-        user.resetPasswordToken = undefined ;
-        user.resetPasswordExpire = undefined  ;
-
-        await user.save();
    
         res.status(500).json({
             status: 'failed',
@@ -202,6 +201,7 @@ const resetpassword  =asyncErrorWrapper(  async (req,res,next) => {
         })
     }
     })
+
 const confirmEmailAndSignUp = catchAsync(async(req, res, next) => {
     const hashedToken = crypto.createHash('shake256').update(req.params.token).digest('hex')
     //1  get user based on token
