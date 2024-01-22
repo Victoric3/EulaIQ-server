@@ -46,7 +46,7 @@ const register = async  (req,res,next) => {
             username,
             email,
             password,
-            photo: "https://i.ibb.co/rx8wvzC/default-1.jpg"
+            photo: "https://i.ibb.co/N3vsnh9/e7982589-9001-476a-9945-65d56b8cd887.jpg"
         })
         const verificationToken = newUser.createToken()
         await newUser.save()

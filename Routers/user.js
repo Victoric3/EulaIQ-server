@@ -3,7 +3,7 @@ const express = require("express")
 
 const {profile,editProfile,changePassword,addStoryToReadList,readListPage} = require("../Controllers/user");
 const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
-const handleImageUpload = require("../Helpers/Libraries/handleImageUpload");
+const { handleImageUpload } = require("../Helpers/Libraries/handleUpload");
 
 
 

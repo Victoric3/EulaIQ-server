@@ -2,6 +2,7 @@ const asyncErrorWrapper = require("express-async-handler")
 const Story = require("../Models/story");
 const deleteImageFile = require("../Helpers/Libraries/deleteImageFile");
 const {searchHelper, paginateHelper} =require("../Helpers/query/queryHelpers")
+const Comment = require("../Models/comment");
 
 
 const addStory = asyncErrorWrapper(async (req, res, next) => {
@@ -39,7 +40,24 @@ const addStory = asyncErrorWrapper(async (req, res, next) => {
     }
   });
   
-  
+const addImage = asyncErrorWrapper(async (req, res, next) => {
+    try {if(!req.fileLink){
+        return res.status(400).json({
+            success: false,
+            errorMessage: "file could not be processed"
+        })
+    }    
+    res.status(200).json({
+        success: true,
+        message: 'file uploaded successfully',
+        url: req.fileLink
+    })} catch(error){
+        res.status(500).json({
+            success: false,
+            errorMessage: error || 'internal server error'
+        })
+    }
+})  
 
 const getAllStories = asyncErrorWrapper( async (req,res,next) =>{
 
@@ -49,7 +67,7 @@ const getAllStories = asyncErrorWrapper( async (req,res,next) =>{
 
     const paginationResult =await paginateHelper(Story , query ,req)
 
-    query = paginationResult.query  ;
+    query = paginationResult.query;
 
     query = query.sort("-likeCount -commentCount -createdAt")
 
@@ -77,8 +95,11 @@ const detailStory =asyncErrorWrapper(async(req,res,next)=>{
 
     const storyLikeUserIds = story.likes.map(json => json.id)
     const likeStatus = storyLikeUserIds.includes(activeUser?._id)
-
-
+    const totalComments = await Comment.countDocuments({
+        story: story._id
+    });
+    story.commentCount = totalComments 
+    story.save()
     return res.status(200).
         json({
             success:true,
@@ -190,6 +211,7 @@ const deleteStory  =asyncErrorWrapper(async(req,res,next)=>{
 
 module.exports ={
     addStory,
+    addImage,
     getAllStories,
     detailStory,
     likeStory,

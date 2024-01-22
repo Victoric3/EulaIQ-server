@@ -24,6 +24,7 @@ rateLimit({
     },
   });
 app.use(cors())
+
 app.get('/', (req, res) => {
     res.send('server successfully running');
   });

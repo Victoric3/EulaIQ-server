@@ -2,7 +2,13 @@ const express = require("express")
 
 const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
 
-const { addNewCommentToStory ,getAllCommentByStory,commentLike ,getCommentLikeStatus} = require("../Controllers/comment")
+const { 
+    addNewCommentToStory,
+    getAllCommentByStory,
+    commentLike,
+    getCommentLikeStatus, 
+    getRepliesForComment
+} = require("../Controllers/comment")
 
 const { checkStoryExist } = require("../Middlewares/database/databaseErrorhandler");
 
@@ -12,6 +18,8 @@ const router = express.Router() ;
 router.post("/:slug/addComment",[getAccessToRoute,checkStoryExist] ,addNewCommentToStory)
 
 router.get("/:slug/getAllComment",getAllCommentByStory)
+
+router.get("/:commentId/replies",getRepliesForComment)
 
 router.post("/:comment_id/like",commentLike)
 

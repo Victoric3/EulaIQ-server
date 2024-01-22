@@ -12,9 +12,13 @@ const CommentSchema = new mongoose.Schema({
         minlength: [3, " Please provide a content least 3 characters"]
     },
     author: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-        required: true
+        _id: {
+            type: mongoose.Schema.ObjectId,
+            ref: "User",
+            required: true
+        },
+        username: String,
+        photo: String
     },
     likes: [{
         type: mongoose.Schema.ObjectId,
@@ -27,8 +31,16 @@ const CommentSchema = new mongoose.Schema({
     star: {
         type: Number,
         default: 0
-    }
-
+    },
+    parentComment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment',
+        default: null,
+      },
+      replies: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment',
+      }]
 
 }, { timestamps: true })
 
