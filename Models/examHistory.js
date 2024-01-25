@@ -9,6 +9,10 @@ const examHistorySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  image: {
+    type: String,
+    default: 'https://i.ibb.co/jW28jQX/30531dedea3d.jpg',
+  },
   totalScore: {
     type: Number,
     required: true,

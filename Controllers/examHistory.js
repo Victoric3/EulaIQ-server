@@ -1,13 +1,15 @@
 const ExamHistory = require('../Models/examHistory');
 
 // Controller to create a new exam history record
-exports.createExamHistory = async (req, res) => {
+const createExamHistory = async (req, res) => {
   try {
-    const { username, exam, totalScore, totalQuestions, subjectScores } = req.body;
+    const { username, exam, totalScore, totalQuestions, subjectScores, image } = req.body;
 
+    
     const newExamHistory = new ExamHistory({
       username,
       exam,
+      image,
       totalScore,
       totalQuestions,
       subjectScores
@@ -22,7 +24,7 @@ exports.createExamHistory = async (req, res) => {
 };
 
 // Controller to get all exam history records
-exports.getAllExamHistory = async (req, res) => {
+const getAllExamHistory = async (req, res) => {
   try {
     const examHistoryList = await ExamHistory.find();
     res.status(200).json(examHistoryList);
@@ -33,10 +35,10 @@ exports.getAllExamHistory = async (req, res) => {
 };
 
 // Controller to get a specific exam history record by ID
-exports.getExamHistoryByUsername = async (req, res) => {
+const getExamHistoryByUsername = async (req, res) => {
   try {
     const { username } = req.query;
-    const examHistory = await ExamHistory.find({username: username});
+    const examHistory = await ExamHistory.find({username: username}).sort({createdAt: -1, _id: 1});
 
     if (!examHistory) {
       return res.status(404).json({ error: 'Exam history not found' });
@@ -51,7 +53,7 @@ exports.getExamHistoryByUsername = async (req, res) => {
 
 
 // Controller to delete a specific exam history record by ID
-exports.deleteExamHistoryById = async (req, res) => {
+const deleteExamHistoryById = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedExamHistory = await ExamHistory.findByIdAndDelete(id);
@@ -66,3 +68,5 @@ exports.deleteExamHistoryById = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+module.exports = {getAllExamHistory, createExamHistory, getExamHistoryByUsername, deleteExamHistoryById}

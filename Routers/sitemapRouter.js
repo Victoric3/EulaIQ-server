@@ -35,15 +35,15 @@ router.get('/sitemap.xml', async (req, res) => {
     const slugs = await Story.find({}, 'slug');
     const slugList = slugs.map((story) => story.slug);
 
-  // Add static pages to the sitemap
-  staticPages.forEach((page) => {
-    smStream.write({ url: page, changefreq: 'monthly', priority: 0.7 });
-  });
-
-  // Add dynamic pages to the sitemap
-  slugList.forEach((page) => {
-    smStream.write({ url: `/story/${page}`, changefreq: 'daily', priority: 0.6 });
-  });
+    // Add dynamic pages to the sitemap
+    slugList.forEach((page) => {
+      smStream.write({ url: `/story/${page}`, changefreq: 'daily', priority: 1.0 });
+    });
+    
+    // Add static pages to the sitemap
+    staticPages.forEach((page) => {
+      smStream.write({ url: page, changefreq: 'monthly', priority: 1.0 });
+    });
 
   smStream.end();
   res.header('Content-Type', 'application/xml');

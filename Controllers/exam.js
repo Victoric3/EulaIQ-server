@@ -8,7 +8,9 @@ const createCustomExam = async (req, res) => {
         name, 
         category,
         grade,
-        difficulty
+        difficulty,
+        description,
+        duration
        } = req.body;
       const examImage = req.fileLink;
       const csvFile = req.files['csvFile'][0];
@@ -61,7 +63,9 @@ const createCustomExam = async (req, res) => {
                 _id: req.user.id,
                 username: req.user.username,
                 photo: req.user.photo
-            }
+            },
+            duration,
+            description
         });
           await exam.save();
   
@@ -72,6 +76,7 @@ const createCustomExam = async (req, res) => {
         
 
     } catch (error) {
+      console.log(error);
       res.status(500).json({         
         success: false,
         errorMessage: error.message });
@@ -105,32 +110,48 @@ const createCustomExam = async (req, res) => {
   const getAllCustomExams = async (req, res) => {
     try{
       const page = parseInt(req.query.page) || 1;
+      const searchTerm = req?.query?.search?.trim();
       const pageSize = 10;
       const examCount = await Exam.countDocuments()
       const maxPages = Math.ceil(examCount / pageSize)
-
+      
       if(page - 1 > maxPages){
         return res.status(404).json({
           errorMessage: 'max-pages exceeded'
         })
       }
 
-      const allExams = await Exam.aggregate([
+      let pipeline = [
         {
-          $project: {
-            name: 1,
-            date: 1,
-            grade: 1,
-            category: 1,
-            difficulty: 1,
-            image: 1,
-            questionLength: { $size: '$questions' }
-          }
+            $project: {
+                name: 1,
+                date: 1,
+                grade: 1,
+                category: 1,
+                difficulty: 1,
+                image: 1,
+                questionLength: { $size: '$questions' }
+            }
+        },
+        {
+            $sort: { createdAt: -1, _id: 1 }
+        },
+        {
+            $skip: (page - 1) * pageSize
+        },
+        {
+            $limit: pageSize
         }
-      ])
-      .sort({createdAt: -1, _id: 1})
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+    ];
+    
+    if (searchTerm) {
+      pipeline.unshift({
+          $match: { name: { $regex: new RegExp(`^${searchTerm}$`, 'i') } }
+      });
+  }
+  
+    
+    const allExams = await Exam.aggregate(pipeline);
 
       if(!allExams){
         return res.status(404).json({

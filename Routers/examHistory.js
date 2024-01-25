@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const examHistoryController = require('../Controllers/examHistory');
+const { createExamHistory, getExamHistoryByUsername, deleteExamHistoryById} = require('../Controllers/examHistory');
 
 // Create a new exam history record
-router.post('/', examHistoryController.createExamHistory);
+router.post('/', createExamHistory);
 
 // Get all exam history records
-// router.get('/', examHistoryController.getAllExamHistory);
-router.get('/', examHistoryController.getExamHistoryByUsername);
+// router.get('/', getAllExamHistory);
+router.get('/', getExamHistoryByUsername);
 
 // Delete a specific exam history record by ID
-router.delete('/:id', examHistoryController.deleteExamHistoryById);
+router.delete('/:id', deleteExamHistoryById);
 
 module.exports = router;

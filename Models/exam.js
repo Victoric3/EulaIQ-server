@@ -6,9 +6,21 @@ const examSchema = new mongoose.Schema({
       unique: true,
       required: true
     },
+    type: {
+      type: String,
+      default: ''
+    },
     difficulty: {
       type: String,
       default: 'not specified'
+    },
+    description: {
+      type: String,
+      default: 'no description for this exam'
+    },
+    duration: {
+      type: String,
+      default: 'no duration set'
     },
     category: String,
     grade: String,
