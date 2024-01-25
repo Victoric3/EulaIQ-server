@@ -36,15 +36,18 @@ router.get('/sitemap.xml', async (req, res) => {
 
     const slugs = await Story.find({}, 'slug');
     const slugList = slugs.map((story) => story.slug);
-    const examTitle = Exam.find({}, '_id')
-    const examTitleList = examTitle.map((exam) => exam._id);
+    const examTitle = await Exam.find()
+    .select({ _id: 1 })
+    .lean()
+    .exec();
+    console.log(examTitle);
 
     // Add dynamic pages to the sitemap
     slugList.forEach((page) => {
       smStream.write({ url: `/story/${page}`, changefreq: 'daily', priority: 1.0 });
     });
-    examTitleList.forEach((page) => {
-      smStream.write({ url: `/allExams/${page}`, changefreq: 'daily', priority: 1.0 });
+    examTitle?.forEach((page) => {
+      smStream.write({ url: `/allExams/${page._id}`, changefreq: 'daily', priority: 1.0 });
     });
     
     // Add static pages to the sitemap
