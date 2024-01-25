@@ -1,7 +1,8 @@
 const express = require('express');
 const sitemap = require('sitemap');
 const { db } = require('../Models/user');
-const Story = require('../Models/story')
+const Story = require('../Models/story');
+const Exam = require('../Models/exam')
 
 const router = express.Router() ;
 
@@ -24,7 +25,8 @@ const staticPages = [
     '/topicByTopic',
     '/jamb',
     '/terms-of-service',
-    '/privacy-policy'
+    '/privacy-policy',
+    '/allExams'
 ];
 
 // Dynamic pages (replace with your dynamic page fetching logic)
@@ -34,10 +36,15 @@ router.get('/sitemap.xml', async (req, res) => {
 
     const slugs = await Story.find({}, 'slug');
     const slugList = slugs.map((story) => story.slug);
+    const examTitle = Exam.find({}, '_id')
+    const examTitleList = examTitle.map((exam) => exam._id);
 
     // Add dynamic pages to the sitemap
     slugList.forEach((page) => {
       smStream.write({ url: `/story/${page}`, changefreq: 'daily', priority: 1.0 });
+    });
+    examTitleList.forEach((page) => {
+      smStream.write({ url: `/allExams/${page}`, changefreq: 'daily', priority: 1.0 });
     });
     
     // Add static pages to the sitemap
