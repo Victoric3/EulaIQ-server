@@ -29,6 +29,10 @@ const examHistorySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  questions: {
+    type: Object,
+    default: {}
+  }
   
 });
 

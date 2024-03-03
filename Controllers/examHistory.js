@@ -3,7 +3,7 @@ const ExamHistory = require('../Models/examHistory');
 // Controller to create a new exam history record
 const createExamHistory = async (req, res) => {
   try {
-    const { username, exam, totalScore, totalQuestions, subjectScores, image } = req.body;
+    const { username, exam, totalScore, totalQuestions, subjectScores, image, questions } = req.body;
 
     
     const newExamHistory = new ExamHistory({
@@ -12,7 +12,8 @@ const createExamHistory = async (req, res) => {
       image,
       totalScore,
       totalQuestions,
-      subjectScores
+      subjectScores,
+      questions
     });
 
     const savedExamHistory = await newExamHistory.save();
@@ -37,19 +38,36 @@ const getAllExamHistory = async (req, res) => {
 // Controller to get a specific exam history record by ID
 const getExamHistoryByUsername = async (req, res) => {
   try {
-    const { username } = req.query;
-    const examHistory = await ExamHistory.find({username: username}).sort({createdAt: -1, _id: 1});
+    const { username, page } = req.query;
+    console.log(req.query);
+    // page = parseInt(page) || 1;
+    const pageSize = 10;
+    const examCount = await ExamHistory.countDocuments()
+    const maxPages = Math.ceil(examCount / pageSize)
+    console.log('maxpages:', maxPages, 'page:', page, 'username:', username, 'examCount:', examCount );
+    
+    if(page - 1 > maxPages){
+      return res.status(404).json({
+        errorMessage: 'max-pages exceeded'
+      })
+    }
 
-    if (!examHistory) {
+    const examHistory = await ExamHistory.find({ username: username })
+    .sort({ timestamp: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize);
+    console.log(examHistory);
+    if (!examHistory || examHistory.length === 0) {
       return res.status(404).json({ error: 'Exam history not found' });
     }
 
-    res.status(200).json(examHistory);
+    res.status(200).json({ examHistory, maxPages });
   } catch (error) {
     console.error('Error getting exam history by ID:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 
 // Controller to delete a specific exam history record by ID
