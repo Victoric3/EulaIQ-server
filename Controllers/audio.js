@@ -112,7 +112,6 @@ const getAllCollections = async (req, res) => {
 const getAudioByCollectionId = async (req, res) => {
   try {
     const { collectionId, deviceInfo } = req.query;
-    console.log(collectionId)
     // Get the current user's ID
     const userId = req.user._id;
 
@@ -123,16 +122,7 @@ const getAudioByCollectionId = async (req, res) => {
       return res.status(401).json({ error: "User not found" });
     }
     // Query the database to find audio records that belong to the specified collection
-    console.log(
-      "user device(browser): ",
-      deviceInfo,
-      "user device(server): ",
-      user.audioCollections[0].device,
-      "collectionId: ",
-      collectionId,
-      "collectionId(server): ",
-      user.audioCollections[0].collectionId
-    );
+    
     if (
       user.audioCollections.some((item) => {
         return (
