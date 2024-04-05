@@ -56,6 +56,10 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    audioCollections: {
+        type: [Object],
+        default: []
+    },
     resetPasswordToken : String ,
     resetPasswordExpire: Date 
 

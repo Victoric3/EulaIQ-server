@@ -12,6 +12,7 @@ const sitemapRoute = require('./sitemapRouter')
 const searchSuggestionRoute = require('./searchSuggestions')
 const examRoute = require('./exam')
 const youtubeDataAnal = require('./youtubeDataAnal')
+const audio = require('./audio')
 
 router.use("/auth",authRoute)
 router.use("/story",storyRoute)
@@ -23,5 +24,6 @@ router.use("/", sitemapRoute)
 router.use("/search", searchSuggestionRoute)
 router.use("/exam", examRoute)
 router.use("/youtube", youtubeDataAnal)
+router.use("/audio", audio)
 
 module.exports = router
