@@ -21,7 +21,7 @@ router.post(
 router.post("/audios", getAccessToRoute, createAudio); // Route to create an audio
 router.get("/audio-collections", getAllCollections); // Route to get all audio collections
 router.get(
-  "/audios",
+  "/audiosById",
   getAccessToRoute,
   getAudioByCollectionId
 ); // Route to get audio by collection ID
