@@ -11,7 +11,7 @@ router.post("/addstory" , [getAccessToRoute, handleImageUpload], addStory) //ima
 router.post("/addImage" , [getAccessToRoute, handleImageUpload], addImage) //image
 
 
-router.post("/:slug", checkStoryExist, detailStory)
+router.get("/:slug", checkStoryExist, detailStory)
 
 router.post("/:slug/like",[getAccessToRoute,checkStoryExist] ,likeStory)
 

@@ -47,6 +47,10 @@ const examSchema = new mongoose.Schema({
         type: String,
         default: "All grades",
       },
+      Institution: {
+        type: String,
+        default: "kingsheart",
+      },
       course: {
         type: String,
         required: true,

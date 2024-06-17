@@ -2,9 +2,18 @@ const mongoose = require("mongoose");
 const AudioCollection = require("../Models/AudioCollection");
 const Audio = require("../Models/Audio");
 const AuthorizationToken = require("../Models/audioToken");
-const User = require("../Models/user"); // Import the User model
+const User = require("../Models/user");
 const { v4: uuidv4 } = require("uuid");
 const { ObjectId } = require("mongodb");
+const { extractAndParseJSON } = require("../Helpers/input/escapeStrinedJson");
+const {
+  processAudioFiles,
+  processTextChunks,
+} = require("../Helpers/Libraries/azureOpenai");
+const { handleTextProcessing } = require("../Controllers/file");
+const { textChunkQueue } = require("../Helpers/Libraries/redis");
+// const fs = require("fs-extra");
+// const path = require("path");
 
 const createAudioCollection = async (req, res) => {
   try {
@@ -38,8 +47,7 @@ const createAudioCollection = async (req, res) => {
 const createAudio = async (req, res) => {
   try {
     // Extract data from the request body
-    const { title, description, audioUrl, audioLength, collectionId } =
-      req.body;
+    const { title, description, audioUrl, collectionId, index } = req.body;
 
     // Check if the collectionId exists
     const collection = await AudioCollection.findOne({ _id: collectionId });
@@ -52,6 +60,7 @@ const createAudio = async (req, res) => {
       description,
       audioUrl,
       audioCollection: collectionId,
+      index,
     });
     collection.audios.push(newAudio);
     await collection.save();
@@ -122,7 +131,7 @@ const getAudioByCollectionId = async (req, res) => {
       return res.status(401).json({ error: "User not found" });
     }
     // Query the database to find audio records that belong to the specified collection
-    
+
     if (
       user.audioCollections.some((item) => {
         return (
@@ -273,6 +282,88 @@ const generateRandomToken = () => {
   return uuidv4(); // Generate a random UUID (version 4)
 };
 
+const handleAudioCreation = async (req, res) => {
+  //access uploaded file
+  const file = req.uploadedFile;
+  const {  voiceActors, module, moduleDescription } = req.body;
+  const voiceActorsArray = JSON.parse(voiceActors);
+  let cleanedFirstResultData;
+  try {
+    const { textChunks, description } = await handleTextProcessing(
+      module,
+      moduleDescription,
+      file
+    );
+    if(textChunks.length === 0){
+      return res.json({message: "we couldn't extract any text from the file"})
+    }
+    //create a collection
+    const newCollection = new AudioCollection({
+      imageUrl: "https://i.ibb.co/MCPFhMT/headphones-3658441-1920.jpg",
+      title: file.originalname,
+      description: description.introduction,
+      createdBy: req.user.id,
+      textChunks
+    });
+
+    // Save the new audio collection to the database
+    await newCollection.save();
+    req.user.audioCollections.push(newCollection);
+
+    // Process the first text chunk and send a response
+    const firstResult = await processTextChunks(
+      null,
+      textChunks[0],
+      module,
+      moduleDescription,
+      voiceActorsArray
+    );
+    if(firstResult === null){
+      cleanedFirstResultData = null
+    }else{
+      // Clean gpt4's result for audio generation
+      cleanedFirstResultData = extractAndParseJSON(firstResult);
+    }
+    // console.log("firstResult: ", firstResult);
+    // console.log("cleanedFirstResultData: ", cleanedFirstResultData);
+
+    // Handle audio creation and upload to Azure blob storage for the first text chunk
+    await processAudioFiles(
+      cleanedFirstResultData,
+      newCollection,
+      0,
+      module,
+      voiceActorsArray
+    );
+
+    if (textChunks.length > 1) {
+      for (let i = 1; i < textChunks.length; i++) {
+        textChunkQueue
+          .add({
+            textChunks,
+            module,
+            moduleDescription,
+            collection: newCollection,
+            index: i,
+            voiceActors : voiceActorsArray,
+          })
+          .then((job) => {
+            console.log(`Job added for chunk ${i} with job ID: ${job.id}`);
+          })
+          .catch((err) => {
+            console.error(`Error adding job for chunk ${i}:`, err);
+          });
+      }
+      res.status(200).json({
+        message: "successfully generated audio",
+        collection: newCollection,
+      });
+    }
+  } catch (error) {
+    console.error(error.message);
+  }
+};
+
 module.exports = {
   createAudioCollection,
   createAudio,
@@ -280,4 +371,5 @@ module.exports = {
   getAudioByCollectionId,
   authorizeUserToPlayCollection,
   createAuthorizationTokenForCollection,
+  handleAudioCreation,
 };

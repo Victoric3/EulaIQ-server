@@ -10,27 +10,28 @@ const createCustomExam = async (req, res) => {
         grade,
         difficulty,
         description,
-        duration
+        duration,
+        JsonQuestions
        } = req.body;
       const examImage = req.fileLink;
       const csvFile = req.files['csvFile'][0];
        
       
-      if (!name || !examImage || !csvFile) {
-        return res.status(400).json({ message: 'Name, examImage, and csvFile are required' });
+      if (!name && !examImage && !JsonQuestions || !csvFile) {
+        return res.status(400).json({ message: 'Name, examImage, and csvFile or JsonQuestions are required' });
       }
       
       const questions = [];
-      const bufferString = csvFile.buffer.toString('utf-8');
+      const bufferString = !JsonQuestions ? csvFile.buffer.toString('utf-8') : null
 
       
       // Parse CSV data
-        const rows = await csv().fromString(bufferString)
+        const rows = !JsonQuestions ? await csv().fromString(bufferString) : JsonQuestions
         
         if(!rows){
           return res.status(400).json({
             success: false,
-            message: 'csvFile was not passed correctly'
+            message: 'csvFile was not passed correctly or no question was provided'
           })
         }
           // Transform CSV row to match question schema
@@ -38,6 +39,7 @@ const createCustomExam = async (req, res) => {
           const question = {
             examBody: "kingsHeart",
             examClass: row.examClass,
+            Institution: row.Institution || "kingsheart",
             course: row.course,
             topic: row.topic,
             difficulty: row.difficulty,

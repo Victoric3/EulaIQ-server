@@ -6,7 +6,7 @@ const audioSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  description: {
+  text: {
     type: String
   },
   audioUrl: {
@@ -20,7 +20,11 @@ const audioSchema = new mongoose.Schema({
   date: {
     type: Date,
     default: Date.now
-}
+},
+  index: {
+    type: Number,
+    required: true
+  }
 });
 
 // Create the audio model

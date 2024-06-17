@@ -3,7 +3,6 @@ const dotenv = require("dotenv")
 const cors = require("cors")
 const path = require("path")
 const rateLimit = require('express-rate-limit');
-
 const IndexRoute = require("./Routers/index")
 const connectDatabase = require("./Helpers/database/connectDatabase")
 const customErrorHandler = require("./Middlewares/Errors/customErrorHandler")

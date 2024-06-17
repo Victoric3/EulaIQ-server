@@ -24,7 +24,17 @@ const audioCollectionSchema = new mongoose.Schema({
   createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+  },
+  type: {
+    type: String,
+    enum: ["added", "generated"],
+    default: "generated"
+  },
+  textChunks: {
+    type: [Object],
+    required: true
   }
+
 });
 
 // Create the audio model

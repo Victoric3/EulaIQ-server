@@ -4,6 +4,7 @@ const deleteImageFile = require("./deleteImageFile");
 const axios = require("axios");
 const FormData = require("form-data");
 const multer = require("multer");
+const path = require("path");
 
 const handleImageUpload = async (req, res, next) => {
   const apiKey = "ffd36b269b0ca78afc1308c7bc256530";
@@ -194,8 +195,51 @@ const handleMultipleImageUpload = async (req, res, next) => {
   }
 };
 
+
+const handleFileUpload = (req, res, next) => {
+  const acceptedFileTypes = ['.pdf', '.docx', '.json', '.txt', '.html', '.csv', '.ppt', '.pptx'];
+  const storage = multer.memoryStorage();
+  const upload = multer({ storage: storage }).single('file');
+
+  upload(req, res, function (err) {
+    if (err) {
+      return next(err);
+    }
+
+    const file = req.file;
+
+    // Check if there is a file in the request
+    if (!file) {
+      // No file provided, continue to the next middleware
+      return next(new Error("No file uploaded"));
+    }
+
+    // Get the file extension
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+
+    // Check if the file type is accepted
+    if (!acceptedFileTypes.includes(fileExtension)) {
+      return res.status(400).json({ error: "Unsupported file type" });
+    }
+
+    // Attach the file buffer and other file details to the request object
+    req.uploadedFile = {
+      buffer: file.buffer,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    };
+
+    // Continue to the next middleware
+    next();
+  });
+};
+
+
+
 module.exports = {
   handleImageUpload,
   handleImageandFileUpload,
   handleMultipleImageUpload,
+  handleFileUpload
 };
