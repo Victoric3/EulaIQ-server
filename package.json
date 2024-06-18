@@ -5,8 +5,8 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js & node worker.js & node connectRedis.js",
-        "worker": "nodemon worker.js",
-        "redis": "nodemon connectRedis.js",
+        "worker": "worker.js",
+        "redis": "connectRedis.js",
         "start:dev": "concurrently \"npm start\" \"npm run worker\" \"npm run redis\""
     },
     "keywords": [],
@@ -48,7 +48,6 @@
         "mongoose": "^6.1.8",
         "multer": "^1.4.4",
         "nodemailer": "^6.9.6",
-        "nodemon": "^2.0.15",
         "office-converter": "^1.0.2",
         "officeparser": "^4.1.1",
         "openai": "^4.48.2",
