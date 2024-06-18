@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const IndexRoute = require("./Routers/index")
 const connectDatabase = require("./Helpers/database/connectDatabase")
 const customErrorHandler = require("./Middlewares/Errors/customErrorHandler")
+// "nodemon": "^2.0.15",
 
 dotenv.config({ path: './config.env' })
 
