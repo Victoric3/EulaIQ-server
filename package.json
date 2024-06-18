@@ -4,9 +4,10 @@
     "description": "",
     "main": "server.js",
     "scripts": {
-        "start": "nodemon server.js",
+        "start": "node server.js & node worker.js & node connectRedis.js",
         "worker": "nodemon worker.js",
-        "redis": "nodemon connectRedis.js"
+        "redis": "nodemon connectRedis.js",
+        "start:dev": "concurrently \"npm start\" \"npm run worker\" \"npm run redis\""
     },
     "keywords": [],
     "author": "chukwujiobi victor ifeanyi",
@@ -21,6 +22,7 @@
         "bcryptjs": "^2.4.3",
         "bull": "^4.13.0",
         "canvas": "^2.11.2",
+        "concurrently": "^8.2.2",
         "cors": "^2.8.5",
         "csvtojson": "^2.0.10",
         "docx": "^8.5.0",
