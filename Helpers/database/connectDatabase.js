@@ -1,12 +1,13 @@
-const mongoose = require("mongoose")
-const { autoSyncElastic } = require("../../Controllers/searchSuggestion")
+const mongoose = require("mongoose");
+// const { autoSyncElastic } = require("../../Controllers/searchSuggestion")
 
-connectDatabase =async  () => {
+connectDatabase = async () => {
+  await mongoose.connect(
+    `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.40erpcv.mongodb.net/?retryWrites=true&w=majority`,
+    { useNewUrlParser: true }
+  );
+  // .then(autoSyncElastic())
+  console.log("MongoDB Connected Successfully");
+};
 
-    await mongoose.connect(`mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.40erpcv.mongodb.net/?retryWrites=true&w=majority` ,{useNewUrlParser : true})
-    .then(autoSyncElastic())
-    console.log("MongoDB Connected Successfully")
-
-}
-
-module.exports = connectDatabase
+module.exports = connectDatabase;
