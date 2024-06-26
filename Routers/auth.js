@@ -7,7 +7,8 @@ const {
     resetpassword,
     getPrivateData,
     confirmEmailAndSignUp,
-    resendVerificationToken
+    resendVerificationToken,
+    unUsualSignIn
 } = require("../Controllers/auth");
 
 const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
@@ -16,8 +17,9 @@ const router = express.Router() ;
 
 
 router.post("/register",register)
-router.post("/resendVerificationToken/:token",resendVerificationToken)
-router.post("/confirmEmailAndSignUp/:token",confirmEmailAndSignUp)
+router.post("/resendVerificationToken",resendVerificationToken)
+router.patch("/confirmEmailAndSignUp",confirmEmailAndSignUp)
+router.patch("/unUsualSignIn",unUsualSignIn)
 
 router.post("/login",login)
 

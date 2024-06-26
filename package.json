@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js & node worker.js & node connectRedis.js",
-    "start:dev": "concurrently \"nodemon server.js\" \"nodemon worker.js\" \"nodemon connectRedis.js\""
+    "start:dev": "concurrently \"nodemon server.js\" \"nodemon worker.js\" \"nodemon connectRedis.js\"",
+    "start:server": "nodemon server.js"
   },
   "keywords": [],
   "author": "chukwujiobi victor ifeanyi",
@@ -35,6 +36,7 @@
     "express-rate-limit": "^7.1.5",
     "extract-json": "^0.2.0",
     "fs-extra": "^11.2.0",
+    "geolib": "^3.3.4",
     "google-auth-library": "^9.2.0",
     "googleapis": "^128.0.0",
     "html-to-text": "^9.0.5",

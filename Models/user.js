@@ -10,7 +10,10 @@ const dotenv = require("dotenv")
 dotenv.config({ path: './config.env' });
 
 const UserSchema = new mongoose.Schema({
-
+    firstname: String,
+    lastname: String,
+    grade: String,
+    temporary: Boolean,
     username : {
         type :String,
         required : [true ,"Please provide a username"]
@@ -38,7 +41,7 @@ const UserSchema = new mongoose.Schema({
     role: {
         type: String,
         default: "user",
-        enum: ["user", "admin"]
+        enum: ["user", "admin", "employee"]
     },
     verificationToken : {
         type: String,
@@ -59,6 +62,22 @@ const UserSchema = new mongoose.Schema({
     audioCollections: {
         type: [Object],
         default: []
+    },
+    preferences: {
+        type: [Object],
+        default: []
+    },
+    location: {
+        type: [Object],
+        required: true
+    },
+    ipAddress: {
+        type: [String],
+        required: true
+    },
+    deviceInfo: {
+        type: [Object],
+        required: true
     },
     resetPasswordToken : String ,
     resetPasswordExpire: Date 
@@ -110,7 +129,7 @@ UserSchema.methods.getResetPasswordTokenFromUser =function(){
 }
 
 UserSchema.methods.createToken = function(){
-    const verificationToken = crypto.randomBytes(32).toString('hex')
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString()
     //hash the reset token
 
     this.verificationToken = crypto.createHash('shake256').update(verificationToken).digest('hex')
