@@ -195,28 +195,38 @@ const handleMultipleImageUpload = async (req, res, next) => {
   }
 };
 
-
 const handleFileUpload = (req, res, next) => {
-  const acceptedFileTypes = ['.pdf', '.docx', '.json', '.txt', '.html', '.csv', '.ppt', '.pptx'];
+  console.log("started file upload");
+    const acceptedFileTypes = [
+      ".pdf",
+    ".docx",
+    ".json",
+    ".txt",
+    ".html",
+    ".csv",
+    ".ppt",
+    ".pptx",
+  ];
   const storage = multer.memoryStorage();
-  const upload = multer({ storage: storage }).single('file');
+  const upload = multer({ storage: storage }).single("file");
 
   upload(req, res, function (err) {
     if (err) {
       return next(err);
     }
-
+    
     const file = req.file;
-
+    console.log("file: ", file);
     // Check if there is a file in the request
     if (!file) {
       // No file provided, continue to the next middleware
       return next(new Error("No file uploaded"));
     }
-
+    
     // Get the file extension
     const fileExtension = path.extname(file.originalname).toLowerCase();
-
+    console.log("file: ", fileExtension);
+    
     // Check if the file type is accepted
     if (!acceptedFileTypes.includes(fileExtension)) {
       return res.status(400).json({ error: "Unsupported file type" });
@@ -233,13 +243,12 @@ const handleFileUpload = (req, res, next) => {
     // Continue to the next middleware
     next();
   });
+
 };
-
-
 
 module.exports = {
   handleImageUpload,
   handleImageandFileUpload,
   handleMultipleImageUpload,
-  handleFileUpload
+  handleFileUpload,
 };

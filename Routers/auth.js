@@ -1,33 +1,31 @@
-const express = require("express")
+const express = require("express");
 
 const {
-    register,
-    login,
-    forgotpassword,
-    resetpassword,
-    getPrivateData,
-    confirmEmailAndSignUp,
-    resendVerificationToken,
-    unUsualSignIn
+  register,
+  login,
+  forgotpassword,
+  resetpassword,
+  getPrivateData,
+  confirmEmailAndSignUp,
+  resendVerificationToken,
+  unUsualSignIn,
 } = require("../Controllers/auth");
 
 const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
 
-const router = express.Router() ;
+const router = express.Router();
 
+router.post("/register", register);
+router.post("/resendVerificationToken", resendVerificationToken);
+router.patch("/confirmEmailAndSignUp", confirmEmailAndSignUp);
+router.patch("/unUsualSignIn", unUsualSignIn);
 
-router.post("/register",register)
-router.post("/resendVerificationToken",resendVerificationToken)
-router.patch("/confirmEmailAndSignUp",confirmEmailAndSignUp)
-router.patch("/unUsualSignIn",unUsualSignIn)
+router.post("/login", login);
 
-router.post("/login",login)
+router.post("/forgotpassword", forgotpassword);
 
-router.post("/forgotpassword",forgotpassword)
+router.put("/resetpassword", resetpassword);
 
-router.put("/resetpassword",resetpassword)
+router.get("/private", getAccessToRoute, getPrivateData);
 
-router.get("/private",getAccessToRoute,getPrivateData)
-
-
-module.exports = router
+module.exports = router;

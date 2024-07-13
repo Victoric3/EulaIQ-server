@@ -12,31 +12,33 @@ const { describe } = require("../data/audioModules");
 const { performOCR } = require("../Helpers/file/advancedOcr");
 const { pdfToImage } = require("../Helpers/file/pdfToimg");
 const { azureOpenai } = require("../Helpers/Libraries/azureOpenai");
+const path = require("path");
 
 const handleTextExtraction = async (file) => {
   try {
+    const fileExtension = path.extname(file.originalname).toLowerCase();
     let contents = [];
 
-    switch (file.mimetype) {
-      case "application/pdf":
+    switch (fileExtension) {
+      case ".pdf":
         contents = await extractPdfContent(file.buffer);
         break;
-      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      case ".docx":
         contents = await extractDocxContent(file);
         break;
-      case "application/json":
+      case ".json":
         contents = await extractJsonContent(file);
         break;
-      case "text/plain":
+      case ".txt":
         contents = await extractTxtContent(file);
         break;
-      case "text/html":
+      case ".html":
         contents = await extractHtmlContent(file);
         break;
-      case "text/csv":
+      case ".csv":
         contents = await extractCsvContent(file);
         break;
-      case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      case ".pptx":
         contents = await extractPptxContent(file, []);
         break;
       default:
@@ -72,18 +74,13 @@ const handleTextExtraction = async (file) => {
   }
 };
 
-const handleTextProcessing = async (
-  module,
-  moduleDescription,
-  file
-) => {
-  //initialize textChunks and results
+const handleTextProcessing = async (module, moduleDescription, file) => {
   let pageTexts = [];
   let textChunks = [];
 
   try {
     textChunks = await handleTextExtraction(file);
-
+    console.log(textChunks);
     //create intro/description for the audio
     const firstTextChunk =
       textChunks[0].textChunks[0] + textChunks[1]?.textChunks[0];
@@ -117,7 +114,7 @@ const handleTextProcessing = async (
       }
       textChunks = pageTexts;
     }
-    
+
     return { textChunks, description: extractedDescription };
   } catch (error) {
     console.log(error);

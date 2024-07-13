@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const IndexRoute = require("./Routers/index")
 const connectDatabase = require("./Helpers/database/connectDatabase")
 const customErrorHandler = require("./Middlewares/Errors/customErrorHandler")
+const cookieParser = require('cookie-parser');
 // "nodemon": "^2.0.15",
 
 dotenv.config({ path: './config.env' })
@@ -24,12 +25,12 @@ rateLimit({
     },
   });
 app.use(cors())
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
     res.send('server successfully running');
   });
 app.use("/",IndexRoute)
-
 app.use(customErrorHandler)
 
 const port = process.env.PORT || 5000 ;

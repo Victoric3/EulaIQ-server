@@ -285,8 +285,8 @@ const generateRandomToken = () => {
 const handleAudioCreation = async (req, res) => {
   //access uploaded file
   const file = req.uploadedFile;
-  const {  voiceActors, module, moduleDescription } = req.body;
-  const voiceActorsArray = JSON.parse(voiceActors);
+  const { voiceActors, module, moduleDescription } = req.body;
+  const voiceActorsArray = voiceActors;
   let cleanedFirstResultData;
   try {
     const { textChunks, description } = await handleTextProcessing(
@@ -294,8 +294,10 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       file
     );
-    if(textChunks.length === 0){
-      return res.json({message: "we couldn't extract any text from the file"})
+    if (textChunks.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "we couldn't extract any text from the file" });
     }
     //create a collection
     const newCollection = new AudioCollection({
@@ -303,7 +305,7 @@ const handleAudioCreation = async (req, res) => {
       title: file.originalname,
       description: description.introduction,
       createdBy: req.user.id,
-      textChunks
+      textChunks,
     });
 
     // Save the new audio collection to the database
@@ -318,9 +320,9 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       voiceActorsArray
     );
-    if(firstResult === null){
-      cleanedFirstResultData = null
-    }else{
+    if (firstResult === null) {
+      cleanedFirstResultData = null;
+    } else {
       // Clean gpt4's result for audio generation
       cleanedFirstResultData = extractAndParseJSON(firstResult);
     }
@@ -345,7 +347,7 @@ const handleAudioCreation = async (req, res) => {
             moduleDescription,
             collection: newCollection,
             index: i,
-            voiceActors : voiceActorsArray,
+            voiceActors: voiceActorsArray,
           })
           .then((job) => {
             console.log(`Job added for chunk ${i} with job ID: ${job.id}`);

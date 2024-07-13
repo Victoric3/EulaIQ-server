@@ -31,7 +31,6 @@ async function generateUniqueUsername() {
     username = `${educationalTerm}${funnyElement}`;
     const randomString = generateRandomString(5); // Adjust the length as needed
     username += randomString;
-    console.log(username);
     
     // Check if the generated username is unique
     const existingUser = await User.findOne({ username });

@@ -69,6 +69,4 @@ function addUserInfo(user, queryInfo) {
   }
 }
 
-
-
 module.exports = { checkUserInfoChange, addUserInfo };

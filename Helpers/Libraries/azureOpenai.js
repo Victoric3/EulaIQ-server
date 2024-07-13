@@ -40,12 +40,18 @@ const processTextChunks = async (
   voiceActors
 ) => {
   try {
-    const previousChunkedText = previousPage?.textChunks
+    const previousChunkedText = previousPage?.textChunks;
     const chunkedText = textChunks.textChunks;
-    if(chunkedText.length < 20){
-      return null
+    if (chunkedText.length < 20) {
+      return null;
     }
-    const query = AudioModule(previousChunkedText, chunkedText, module, moduleDescription, voiceActors);
+    const query = AudioModule(
+      previousChunkedText,
+      chunkedText,
+      module,
+      moduleDescription,
+      voiceActors
+    );
     const result = await azureOpenai(
       query,
       `
@@ -64,15 +70,21 @@ const processTextChunks = async (
   }
 };
 
-const processAudioFiles = async (cleanedResultData, collection, index, module, voiceActors) => {
+const processAudioFiles = async (
+  cleanedResultData,
+  collection,
+  index,
+  module,
+  voiceActors
+) => {
   try {
-    const outputFile = `${cleanedResultData.title}.mp3`;
+    const outputFile = `${cleanedResultData?.title}.mp3`;
     const textChunks = cleanedResultData.textChunks
       ? cleanedResultData.textChunks
       : cleanedResultData.textChunk;
-    const ssml = generateSSML(textChunks, module, voiceActors[0])
+    const ssml = generateSSML(textChunks, module, voiceActors[0]);
     // console.log("ssml:", ssml);
-    
+
     const audioUrl = await textToSpeech(
       process.env.AZURE_SPEECH_API_KEY,
       "northcentralus",
