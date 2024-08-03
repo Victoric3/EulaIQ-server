@@ -5,7 +5,6 @@ const AuthorizationToken = require("../Models/audioToken");
 const User = require("../Models/user");
 const { v4: uuidv4 } = require("uuid");
 const { ObjectId } = require("mongodb");
-const { extractAndParseJSON } = require("../Helpers/input/escapeStrinedJson");
 const {
   processAudioFiles,
   processTextChunks,
@@ -18,7 +17,7 @@ const { textChunkQueue } = require("../Helpers/Libraries/redis");
 const createAudioCollection = async (req, res) => {
   try {
     // Extract data from the request body
-    const { title, description } = req.body;
+    const { title, description, access } = req.body;
 
     // Create a new audio collection instance
     const newCollection = new AudioCollection({
@@ -27,6 +26,7 @@ const createAudioCollection = async (req, res) => {
       title,
       description,
       createdBy: req.user._id,
+      access,
     });
 
     // Save the new audio collection to the database
@@ -91,7 +91,9 @@ const getAllCollections = async (req, res) => {
     const skip = (pageNumber - 1) * limitNumber;
 
     // Query the database to get audio collections with pagination
-    const collections = await AudioCollection.find()
+    const collections = await AudioCollection.find({
+      access: { $ne: "private" },
+    })
       .select("-audios")
       .skip(skip)
       .limit(limitNumber)
@@ -120,42 +122,112 @@ const getAllCollections = async (req, res) => {
 // Controller to get audio by collection
 const getAudioByCollectionId = async (req, res) => {
   try {
-    const { collectionId, deviceInfo } = req.query;
-    // Get the current user's ID
-    const userId = req.user._id;
+    const { collectionId } = req.query;
+    let audioCollection = await AudioCollection.findById(collectionId).exec();
 
-    // Find the user by ID and check if the collectionId exists in the user's audioCollectionIds array
-    const user = await User.findById(userId);
-    let audio;
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-    // Query the database to find audio records that belong to the specified collection
-
-    if (
-      user.audioCollections.some((item) => {
-        return (
-          item.collectionId.equals(mongoose.Types.ObjectId(collectionId)) &&
-          item.device === deviceInfo
-        );
-      })
-    ) {
-      audio = await AudioCollection.findById(collectionId).exec();
-    } else {
-      return res
-        .status(401)
-        .json({ message: "You need to purchase this audio to listen" });
-    }
-
-    // If no audio records are found for the collection, respond with a 404 status code
-    if (!audio) {
+    // If no audioCollection records are found for the collection id, respond with a 404 status code
+    if (!audioCollection) {
       return res
         .status(404)
         .json({ message: "Audio not found for the specified collection" });
     }
 
+    // Get the current user's ID
+    if (audioCollection?.access === "private") {
+      // Find the user by ID and check if the collectionId exists in the user's audioCollectionIds array
+      const userId = req.user._id;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      // Query the database to find audio records that belong to the specified collection
+      if (
+        !user.audioCollections.some((item) => {
+          return item.collectionId.equals(
+            mongoose.Types.ObjectId(collectionId)
+          );
+        })
+      ) {
+        return res.status(401).json({
+          message: "You cannot access this collection because it is private.",
+        });
+      }
+    }
+
     // If audio records are found, respond with the audio data
-    res.status(200).json(audio.audios);
+    res.status(200).json(audioCollection.audios);
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Controller to get audio by collection
+const getAllCollectionsByUser = async (req, res) => {
+  try {
+    // Find the user by ID and check if the collectionId exists in the user's audioCollectionIds array
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const audioCollectionIds = user.audioCollections.map(
+      (collection) => collection.collectionId
+    );
+
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Find the audio collections with pagination
+    const audioCollections = await AudioCollection.find({
+      _id: { $in: audioCollectionIds },
+    })
+      .skip(skip)
+      .limit(limit);
+
+    // Extract all createdBy user IDs from audioCollections
+    const creatorIds = audioCollections.map(
+      (collection) => collection.createdBy
+    );
+
+    // Find the creator details
+    const creators = await User.find({
+      _id: { $in: creatorIds },
+    }).select("username photo _id"); // Only select the needed fields
+
+    // Create a map of creator details for easy lookup
+    const creatorMap = creators.reduce((map, creator) => {
+      map[creator._id] = creator;
+      return map;
+    }, {});
+
+    // Replace createdBy in audioCollections with the actual user details
+    const updatedAudioCollections = audioCollections.map((collection) => ({
+      ...collection._doc, // Spread the original collection data
+      createdBy: creatorMap[collection.createdBy], // Replace createdBy with the user details
+    }));
+
+    // Get the total count for pagination purposes
+    const totalCollections = await AudioCollection.countDocuments({
+      _id: { $in: audioCollectionIds },
+    });
+
+    // Prepare the paginated response
+    const response = {
+      audioCollections: updatedAudioCollections,
+      pagination: {
+        total: totalCollections,
+        page: page,
+        pages: Math.ceil(totalCollections / limit),
+      },
+    };
+
+    // If audio records are found, respond with the audio data
+    res.status(200).json(response);
   } catch (error) {
     // Handle errors
     console.error(error);
@@ -167,7 +239,7 @@ const getAudioByCollectionId = async (req, res) => {
 const authorizeUserToPlayCollection = async (req, res) => {
   try {
     // Extract the token from the request body
-    const { token, deviceInfo } = req.body;
+    const { token } = req.body;
     const collectionToUnlock = req.body.collectionId;
 
     // Check if the token exists
@@ -221,7 +293,6 @@ const authorizeUserToPlayCollection = async (req, res) => {
     // Add the collection ID to the user's audioCollectionIds array
     user.audioCollections.push({
       collectionId: collectionId,
-      device: deviceInfo,
     });
 
     // Save the updated user
@@ -246,16 +317,29 @@ const authorizeUserToPlayCollection = async (req, res) => {
 const createAuthorizationTokenForCollection = async (req, res) => {
   try {
     // Extract collection ID from the request parameters
-    const { collectionId, adminPass } = req.body;
-    if (adminPass !== process.env.Admin_Pass) {
-      return res
-        .status(401)
-        .json({ message: "you are not allowed to do this" });
+    const { collectionId } = req.body;
+
+    //find user
+    const user = User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    if (
+      !user.audioCollections.some((item) => {
+        return item.collectionId.equals(mongoose.Types.ObjectId(collectionId));
+      })
+    ) {
+      return res.status(401).json({
+        status: "access denied",
+        errorMessage: "access denied, you do not own this collection",
+      });
+    }
+
     // Generate a random authorization token
     const token = generateRandomToken();
 
-    // Calculate the expiration date (e.g., 24 hours from now)
+    // Calculate the expiration date
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7); // Set expiration to 24 hours from now
 
@@ -270,7 +354,7 @@ const createAuthorizationTokenForCollection = async (req, res) => {
     await newToken.save();
 
     // Respond with the created token
-    res.status(201).json({ token });
+    res.status(200).json({ token });
   } catch (error) {
     // Handle errors
     console.error(error);
@@ -282,87 +366,194 @@ const generateRandomToken = () => {
   return uuidv4(); // Generate a random UUID (version 4)
 };
 
+const processRemainingChunks = async (index, collection, processguide, res) => {
+  const { module, moduleDescription, voiceActorsArray } = processguide;
+  const textChunks = collection.textChunks;
+
+  if (index < textChunks.length) {
+    try {
+      const result = await processTextChunks(
+        textChunks[index - 1],
+        textChunks[index],
+        module,
+        moduleDescription,
+        voiceActorsArray,
+        res
+      );
+      console.log("result: ", result);
+      console.log("collection: ", collection);
+      const { audioCollection } = await processAudioFiles(
+        result,
+        collection,
+        index,
+        module,
+        voiceActorsArray,
+        res
+      );
+      res.io.emit("audio-progress", {
+        message: `Successfully generated audio for page ${index + 1}`,
+        currentIndex: index + 1,
+      });
+
+      await processRemainingChunks(
+        index + 1,
+        audioCollection,
+        processguide,
+        res
+      );
+    } catch (error) {
+      console.error(`Error processing chunk ${index}:`, error);
+      res.io.emit("audio-error", {
+        message: `Error processing chunk ${index}`,
+        error: error.message,
+      });
+    }
+  } else {
+    res.status(200).json({
+      message: "Successfully generated all audio",
+      collection,
+    });
+  }
+};
+
 const handleAudioCreation = async (req, res) => {
   //access uploaded file
   const file = req.uploadedFile;
-  const { voiceActors, module, moduleDescription } = req.body;
+  // console.log("file: ", file);
+  const { voiceActors, module, moduleDescription, text } = req.body;
   const voiceActorsArray = voiceActors;
-  let cleanedFirstResultData;
+
   try {
     const { textChunks, description } = await handleTextProcessing(
       module,
       moduleDescription,
-      file
+      file,
+      text,
+      res
     );
-    if (textChunks.length === 0) {
+    console.log("textChunks.length: ", textChunks.length);
+    console.log("textChunks: ", textChunks);
+
+    if (text?.length > 0) {
+      textChunks.unshift(text);
+      console.log("textChunks with text: ", textChunks);
+    } else if (textChunks.length === 0) {
       return res
         .status(400)
         .json({ message: "we couldn't extract any text from the file" });
     }
+
     //create a collection
     const newCollection = new AudioCollection({
       imageUrl: "https://i.ibb.co/MCPFhMT/headphones-3658441-1920.jpg",
       title: file.originalname,
       description: description.introduction,
       createdBy: req.user.id,
-      textChunks,
+      textChunks: textChunks,
     });
 
     // Save the new audio collection to the database
     await newCollection.save();
-    req.user.audioCollections.push(newCollection);
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    user.audioCollections.push({
+      collectionId: newCollection._id,
+    });
+    await user.save();
 
-    // Process the first text chunk and send a response
     const firstResult = await processTextChunks(
       null,
-      textChunks[0],
+      text || textChunks[0],
       module,
       moduleDescription,
-      voiceActorsArray
+      voiceActorsArray,
+      res
     );
-    if (firstResult === null) {
-      cleanedFirstResultData = null;
-    } else {
-      // Clean gpt4's result for audio generation
-      cleanedFirstResultData = extractAndParseJSON(firstResult);
-    }
-    // console.log("firstResult: ", firstResult);
-    // console.log("cleanedFirstResultData: ", cleanedFirstResultData);
-
+    console.log("firsttextChunk: ", textChunks[0]);
+    console.log("firsttextResult: ", firstResult);
     // Handle audio creation and upload to Azure blob storage for the first text chunk
-    await processAudioFiles(
-      cleanedFirstResultData,
+    const { audioCollection } = await processAudioFiles(
+      firstResult,
       newCollection,
       0,
       module,
-      voiceActorsArray
+      voiceActorsArray,
+      res
     );
-
+    // return res.json({
+    //   message: "synthesis finished",
+    //   collection: audioCollection
+    // })
     if (textChunks.length > 1) {
-      for (let i = 1; i < textChunks.length; i++) {
-        textChunkQueue
-          .add({
-            textChunks,
-            module,
-            moduleDescription,
-            collection: newCollection,
-            index: i,
-            voiceActors: voiceActorsArray,
-          })
-          .then((job) => {
-            console.log(`Job added for chunk ${i} with job ID: ${job.id}`);
-          })
-          .catch((err) => {
-            console.error(`Error adding job for chunk ${i}:`, err);
-          });
-      }
+      await processRemainingChunks(
+        1,
+        audioCollection,
+        {
+          module,
+          moduleDescription,
+          voiceActorsArray,
+        },
+        res
+      );
+
+      // for (let i = 1; i < textChunks.length; i++) {
+      //   textChunkQueue
+      //     .add({
+      //       textChunks,
+      //       module,
+      //       moduleDescription,
+      //       collection: newCollection,
+      //       index: i,
+      //       voiceActors: voiceActorsArray,
+      //     })
+      //     .then((job) => {
+      //       console.log(`Job added for chunk ${i} with job ID: ${job.id}`);
+      //     })
+      //     .catch((err) => {
+      //       console.error(`Error adding job for chunk ${i}:`, err);
+      //     });
+      // }
+    } else {
       res.status(200).json({
         message: "successfully generated audio",
-        collection: newCollection,
+        collection: audioCollection,
       });
     }
   } catch (error) {
+    console.error(error);
+  }
+};
+
+const continueAudioCreation = async (req, res) => {
+  const { collectionId, module, moduleDescription, voiceActors } = req.body;
+
+  try {
+    const collection = await AudioCollection.findById(collectionId);
+    if (!collection) {
+      return res.status(404).json({ error: "Collection not found" });
+    }
+    const currentIndex = collection.audios.length;
+    const voiceActorsArray = voiceActors;
+
+    // Start processing remaining chunks
+    await processRemainingChunks(
+      currentIndex,
+      collection,
+      {
+        module,
+        moduleDescription,
+        voiceActorsArray,
+      },
+      res
+    );
+  } catch (error) {
     console.error(error.message);
+    res
+      .status(500)
+      .json({ error: "An error occurred while continuing audio generation" });
   }
 };
 
@@ -371,7 +562,9 @@ module.exports = {
   createAudio,
   getAllCollections,
   getAudioByCollectionId,
+  getAllCollectionsByUser,
   authorizeUserToPlayCollection,
   createAuthorizationTokenForCollection,
   handleAudioCreation,
+  continueAudioCreation,
 };

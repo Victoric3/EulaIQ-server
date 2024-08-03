@@ -7,7 +7,7 @@ const {
   extractPptxContent,
   extractTxtContent,
 } = require("../Helpers/file/otherFileTypes");
-const { extractTextFromOCR } = require("../Helpers/input/escapeStrinedJson");
+const { extractTextFromOCR, extractAndParseJSON } = require("../Helpers/input/escapeStrinedJson");
 const { describe } = require("../data/audioModules");
 const { performOCR } = require("../Helpers/file/advancedOcr");
 const { pdfToImage } = require("../Helpers/file/pdfToimg");
@@ -53,7 +53,7 @@ const handleTextExtraction = async (file) => {
 
       // Initialize page content array if it doesn't exist
       if (!pagesContent[pageIndex]) {
-        pagesContent[pageIndex] = { textChunks: [], images: [] };
+        pagesContent[pageIndex] = { textChunks: [] };
       }
 
       if (text) {
@@ -74,52 +74,86 @@ const handleTextExtraction = async (file) => {
   }
 };
 
-const handleTextProcessing = async (module, moduleDescription, file) => {
+const handleTextProcessing = async (module, moduleDescription, file, text, res) => {
   let pageTexts = [];
-  let textChunks = [];
+  let textChunks;
+  const maxRetries = 3;
+
+  const retry = async (fn, retries = maxRetries, res) => {
+    let lastError;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        console.log(`Attempt ${attempt} failed. Retrying...`);
+        if (res) {
+          res.io.emit('text-processing-progress', {
+            message: `Attempt ${attempt} failed. Retrying...`,
+            attempt,
+            error: error.message
+          });
+        }
+      }
+    }
+    throw lastError;
+  };
 
   try {
-    textChunks = await handleTextExtraction(file);
-    console.log(textChunks);
-    //create intro/description for the audio
+    console.log("started extracting file text");
+    if (file) {
+      textChunks = await retry(() => handleTextExtraction(file), 3, res);
+    }
+
     const firstTextChunk =
-      textChunks[0].textChunks[0] + textChunks[1]?.textChunks[0];
+    text?.length > 0
+    ? text
+    : textChunks[0].textChunks[0] + textChunks[1]?.textChunks[0];
+
     const query = describe(firstTextChunk, module, moduleDescription);
-    //describe the collection
-    const description = await azureOpenai(
+
+    const extractedDescription = await retry(async () => {
+      const description = await azureOpenai(
       query,
       `you are an audio resource describer, return a text describing the audio to serve as an introduction to it, use very simple language`,
-      "gpt4-omini"
-    );
-    const extractedDescription = JSON.parse(
-      description.replace(/```json|```/g, "").trim()
-    );
-    // console.log(extractedDescription);
-
-    //if the extractionEfficiency is false and its a pdf use advanced ocr
+      "gpt-4o"
+    )
+    return extractAndParseJSON(description)
+  }, 3, res);
+    console.log("extractedDescription :", extractedDescription)
     if (
       firstTextChunk.length < 20 ||
       (!extractedDescription.extractionEfficiency &&
         file.mimetype === "application/pdf")
     ) {
-      const pageImages = await pdfToImage(file.buffer);
-
+      const pageImages = await retry(() => pdfToImage(file.buffer));
       for (let i = 0; i < pageImages.length; i++) {
         if (!pageTexts[i]) {
           pageTexts[i] = { textChunks: [], images: [] };
         }
-        const ocrResult = await performOCR(pageImages[i].imageBuffer);
+
+        const ocrResult = await retry(() => performOCR(pageImages[i].imageBuffer));
         const text = extractTextFromOCR(ocrResult);
         pageTexts[i].textChunks.push(text);
       }
       textChunks = pageTexts;
     }
 
-    return { textChunks, description: extractedDescription };
+    return { 
+      textChunks: textChunks.flatMap(obj => obj.textChunks), 
+      description: extractedDescription 
+    };
   } catch (error) {
     console.log(error);
+      res.io.emit('text-processing-error', {
+        message: "Error during text processing",
+        error: error.message
+      });
+    throw error;
   }
 };
+
+
 
 module.exports = {
   extractPdfContent,

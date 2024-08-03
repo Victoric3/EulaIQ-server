@@ -4,13 +4,9 @@ const { Buffer } = require("buffer");
 const { PassThrough } = require("stream");
 const fs = require("fs");
 const Audio = require("../../Models/Audio");
-const AudioCollection = require("../../Models/AudioCollection")
-/**
- * Function to upload a local file to Azure Blob Storage
- * @param {*} containerClient ContainerClient object
- * @param {*} blobName string, includes file extension if provided
- * @param {*} localFilePath fully qualified path and file name
- */
+const AudioCollection = require("../../Models/AudioCollection");
+
+// Function to upload a local file to Azure Blob Storage
 const uploadBlobFromLocalPath = async (
   containerClient,
   blobName,
@@ -20,23 +16,14 @@ const uploadBlobFromLocalPath = async (
   await blockBlobClient.uploadFile(localFilePath);
 };
 
-/**
- * Node.js server code to convert text to speech
- * @returns stream or URL
- * @param {*} key your resource key
- * @param {*} region your resource region
- * @param {*} ssml SSML string to convert to audio/speech
- * @param {*} title title of the file to be used in the blob name
- * @param {*} filename optional - best for long text - temp file for converted speech/audio
- */
+// Function to calculate audio duration
+const calculateDuration = async (filePath) => {
+  const mm = await import("music-metadata");
+  const metadata = await mm.parseFile(filePath);
+  return metadata.format.duration;
+};
 
-// process.env.AZURE_SPEECH_API_KEY,
-//       "northcentralus",
-//       cleanedResultData.textChunk,
-//       cleanedResultData.title,
-//       outputFile,
-//       collection,
-//       index
+// Function to convert text to speech
 const textToSpeech = async (
   key,
   region,
@@ -47,14 +34,11 @@ const textToSpeech = async (
   index
 ) => {
   try {
-    const audioCollection = await AudioCollection.findById(collection._id)
-    // console.log(audioCollection);
-    // convert callback function to promise
+    const audioCollection = await AudioCollection.findById(collection._id);
     return new Promise((resolve, reject) => {
       const speechConfig = sdk.SpeechConfig.fromSubscription(key, region);
       speechConfig.speechSynthesisOutputFormat =
-        sdk.SpeechSynthesisOutputFormat.Audio24Khz160KBitRateMonoMp3; // mp3 format
-      // speechConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural";
+        sdk.SpeechSynthesisOutputFormat.Audio24Khz160KBitRateMonoMp3;
 
       let audioConfig = null;
 
@@ -68,7 +52,6 @@ const textToSpeech = async (
         ssml,
         async (result) => {
           const { audioData } = result;
-          console.log("audioData: ", audioData);
           if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
             console.log("synthesis finished.");
           } else {
@@ -77,11 +60,8 @@ const textToSpeech = async (
           synthesizer.close();
 
           if (filename) {
-            // Write to file
             fs.writeFileSync(filename, Buffer.from(audioData));
-
             try {
-              // Upload the file to Blob Storage
               const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
               const blobName = `${title}-${timestamp}.mp3`;
               const encodedBlobName = encodeURIComponent(blobName);
@@ -97,10 +77,8 @@ const textToSpeech = async (
                 filename
               );
 
-              // Clean up the temp file
-              fs.unlinkSync(filename);
-
               const audioUrl = `https://${blobServiceClient.accountName}.blob.core.windows.net/${process.env.CONTAINER_NAME}/${encodedBlobName}`;
+              const duration = await calculateDuration(filename);
 
               const newAudio = new Audio({
                 title,
@@ -108,22 +86,25 @@ const textToSpeech = async (
                 audioUrl,
                 audioCollection: collection._id,
                 index,
+                audioDuration: duration,
               });
+              audioCollection.playtime =
+                (audioCollection.playtime || 0) + duration;
               audioCollection.audios.push({
                 index,
-                audioId: newAudio._id
+                audioId: newAudio._id,
+                audioDuration: duration,
               });
               await audioCollection.save();
-              // Save the new audio to the database
               await newAudio.save();
-              // Save the new audio to the creator
-              // Return the URL of the uploaded blob
-              resolve(audioUrl);
+
+              fs.unlinkSync(filename);
+
+              resolve({audioUrl, audioCollection});
             } catch (uploadError) {
               reject(uploadError);
             }
           } else {
-            // Return stream from memory
             const bufferStream = new PassThrough();
             bufferStream.end(Buffer.from(audioData));
             resolve(bufferStream);
@@ -137,7 +118,7 @@ const textToSpeech = async (
     });
   } catch (err) {
     console.error(err);
-    throw err; // Re-throw the error to ensure it propagates correctly
+    throw err;
   }
 };
 

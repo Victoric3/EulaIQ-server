@@ -159,7 +159,7 @@ const extractPptxContent = async (file, imageNumbers) => {
     let textContents = [];
 
     // Process the extracted text
-    if (imageNumbers) {
+    if (imageNumbers.length > 0) {
       const pdfBuffer = await convertPptxToPdfBuffer(tempFilePath);
       const text = await extractPdfContent(pdfBuffer);
       return (textContents = [...text]);
@@ -172,15 +172,23 @@ const extractPptxContent = async (file, imageNumbers) => {
           resolve(text);
         });
       });
-      textContents = text.split("\n").map((line, index) => ({
-        text: line.trim(),
-        position: {
-          pageIndex: Math.floor(index / 10), // Assuming 10 lines per slide as an example
-          lineIndex: index % 10,
-        },
-      }));
-    }
+      const lines = text.split(".").map(line => line.trim());
+      const linesPerChunk = 15;
 
+      for (let i = 0; i < lines.length; i += linesPerChunk) {
+        const chunkLines = lines.slice(i, i + linesPerChunk);
+        const concatenatedText = chunkLines.join(". ");
+
+        textContents.push({
+          text: concatenatedText,
+          position: {
+            pageIndex: Math.floor(i / linesPerChunk),
+            lineIndex: i % linesPerChunk,
+          },
+        });
+      }
+    }
+    
     // Delete the temporary file
     fs.unlinkSync(tempFilePath);
     return textContents;

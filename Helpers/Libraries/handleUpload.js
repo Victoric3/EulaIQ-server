@@ -216,7 +216,6 @@ const handleFileUpload = (req, res, next) => {
     }
     
     const file = req.file;
-    console.log("file: ", file);
     // Check if there is a file in the request
     if (!file) {
       // No file provided, continue to the next middleware
@@ -225,7 +224,7 @@ const handleFileUpload = (req, res, next) => {
     
     // Get the file extension
     const fileExtension = path.extname(file.originalname).toLowerCase();
-    console.log("file: ", fileExtension);
+    console.log("fileExtension: ", fileExtension);
     
     // Check if the file type is accepted
     if (!acceptedFileTypes.includes(fileExtension)) {

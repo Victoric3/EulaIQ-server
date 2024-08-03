@@ -6,9 +6,11 @@ const {
   createAudio,
   getAllCollections,
   getAudioByCollectionId,
+  getAllCollectionsByUser,
   authorizeUserToPlayCollection,
   createAuthorizationTokenForCollection,
   handleAudioCreation,
+  continueAudioCreation
 } = require("../Controllers/audio");
 const {
   handleImageUpload,
@@ -21,21 +23,27 @@ router.post(
   getAccessToRoute,
   handleImageUpload,
   createAudioCollection
-); // Route to create an audio collection
-router.post("/audios", getAccessToRoute, createAudio); // Route to create an audio
-router.get("/audio-collections", getAllCollections); // Route to get all audio collections
-router.get("/audiosById", getAccessToRoute, getAudioByCollectionId); // Route to get audio by collection ID
+);
+router.post("/audios", getAccessToRoute, createAudio);
+router.get("/audio-collections", getAllCollections);
+router.get("/audiosById", getAccessToRoute, getAudioByCollectionId);
+router.get("/audiosByUser", getAccessToRoute, getAllCollectionsByUser);
 router.post("/authorize", getAccessToRoute, authorizeUserToPlayCollection);
 router.post(
   "/authorization-token",
   getAccessToRoute,
   createAuthorizationTokenForCollection
-); // Route to create an authorization token for a collection
+);
 router.post(
   "/generateAudio",
   getAccessToRoute,
   handleFileUpload,
   handleAudioCreation
+);
+router.post(
+  "/continueAudioGeneration",
+  getAccessToRoute,
+  continueAudioCreation
 );
 
 module.exports = router;

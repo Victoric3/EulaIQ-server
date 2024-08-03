@@ -1,43 +1,82 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Define the schema for the audio model
 const audioCollectionSchema = new mongoose.Schema({
   imageUrl: {
     type: String,
-    default: ""
+    default: "",
   },
   title: {
     type: String,
-    required: true
+    required: true,
   },
   description: {
-    type: String
+    type: String,
   },
   audios: {
     type: [Object],
-    default: []
+    default: [],
   },
   date: {
     type: Date,
-    default: Date.now
-},
+    default: Date.now,
+  },
   createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   type: {
     type: String,
     enum: ["added", "generated"],
-    default: "generated"
+    default: "generated",
+  },
+  access: {
+    type: String,
+    enum: ["private", "public"],
+    default: "public",
   },
   textChunks: {
-    type: [Object],
-    required: true
-  }
-
+    type: [String],
+    required: true,
+  },
+  playtime: {
+    type: Number,
+    default: 0,
+  },
+  playCount: {
+    type: Number,
+    default: 0,
+  },
+  rating: {
+    type: Number,
+    default: 5,
+  },
+  likes: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+  ],
+  likeCount: {
+    type: Number,
+    default: 0,
+  },
+  comments: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: "Comment",
+    },
+  ],
+  commentCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // Create the audio model
-const AudioCollection = mongoose.model('AudioCollection', audioCollectionSchema);
+const AudioCollection = mongoose.model(
+  "AudioCollection",
+  audioCollectionSchema
+);
 
 module.exports = AudioCollection;

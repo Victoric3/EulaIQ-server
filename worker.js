@@ -7,23 +7,23 @@ const {
   processTextChunks,
 } = require("./Helpers/Libraries/azureOpenai");
 const { extractAndParseJSON } = require("./Helpers/input/escapeStrinedJson");
-const Redis = require("ioredis");
+// const Redis = require("ioredis");
 const connectDatabase = require("./Helpers/database/connectDatabase")
 connectDatabase()
 
 
 // Initialize Redis client for status updates
-const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD,
-  tls: {},
-});
+// const redis = new Redis({
+//   host: process.env.REDIS_HOST,
+//   port: process.env.REDIS_PORT,
+//   password: process.env.REDIS_PASSWORD,
+//   tls: {},
+// });
 
 // Function to update status in Redis
-const updateStatus = async (jobId, status) => {
-  await redis.hset(`job:${jobId}`, "status", status);
-};
+// const updateStatus = async (jobId, status) => {
+//   await redis.hset(`job:${jobId}`, "status", status);
+// };
 
 textChunkQueue.process(async (job) => {
   const {
@@ -39,7 +39,7 @@ textChunkQueue.process(async (job) => {
 
   try {
     console.log(`Started processing chunk ${index} for job ${jobId}`);
-    await updateStatus(jobId, `Processing chunk ${index}`);
+    // await updateStatus(jobId, `Processing chunk ${index}`);
     const result = await processTextChunks(
       textChunks[index - 1],
       textChunks[index],
@@ -56,16 +56,16 @@ textChunkQueue.process(async (job) => {
     await processAudioFiles(cleanedResultData, collection, index, module, voiceActors);
 
     console.log(`Finished processing chunk ${index} for job ${jobId}`);
-    await updateStatus(jobId, `Finished processing chunk ${index}`);
+    // await updateStatus(jobId, `Finished processing chunk ${index}`);
   } catch (error) {
     console.error(
       `Error processing chunk ${index} for job ${jobId}:`,
       error.message
     );
-    await updateStatus(
-      jobId,
-      `Error processing chunk ${index}: ${error.message}`
-    );
+    // await updateStatus(
+    //   jobId,
+    //   `Error processing chunk ${index}: ${error.message}`
+    // );
     throw error;
   }
 });

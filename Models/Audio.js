@@ -13,6 +13,10 @@ const audioSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  audioDuration: {
+    type: Number,
+    required: true
+  },
   audioCollection: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AudioCollection'
