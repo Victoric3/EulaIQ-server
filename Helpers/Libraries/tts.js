@@ -6,7 +6,6 @@ const fs = require("fs");
 const Audio = require("../../Models/Audio");
 const AudioCollection = require("../../Models/AudioCollection");
 
-// Function to upload a local file to Azure Blob Storage
 const uploadBlobFromLocalPath = async (
   containerClient,
   blobName,
@@ -16,14 +15,12 @@ const uploadBlobFromLocalPath = async (
   await blockBlobClient.uploadFile(localFilePath);
 };
 
-// Function to calculate audio duration
 const calculateDuration = async (filePath) => {
   const mm = await import("music-metadata");
   const metadata = await mm.parseFile(filePath);
   return metadata.format.duration;
 };
 
-// Function to convert text to speech
 const textToSpeech = async (
   key,
   region,
@@ -31,83 +28,99 @@ const textToSpeech = async (
   title,
   filename,
   collection,
-  index
+  index,
+  voice
 ) => {
   try {
     const audioCollection = await AudioCollection.findById(collection._id);
+
     return new Promise((resolve, reject) => {
       const speechConfig = sdk.SpeechConfig.fromSubscription(key, region);
       speechConfig.speechSynthesisOutputFormat =
         sdk.SpeechSynthesisOutputFormat.Audio24Khz160KBitRateMonoMp3;
 
-      let audioConfig = null;
-
-      if (filename) {
-        audioConfig = sdk.AudioConfig.fromAudioFileOutput(filename);
-      }
-
+      const audioConfig = filename
+        ? sdk.AudioConfig.fromAudioFileOutput(filename)
+        : null;
       const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
 
+      console.log("ssml: ", ssml);
       synthesizer.speakSsmlAsync(
         ssml,
         async (result) => {
-          const { audioData } = result;
-          if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
-            console.log("synthesis finished.");
-          } else {
-            console.error("Speech synthesis canceled, " + result.errorDetails);
-          }
           synthesizer.close();
 
-          if (filename) {
-            fs.writeFileSync(filename, Buffer.from(audioData));
-            try {
-              const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-              const blobName = `${title}-${timestamp}.mp3`;
-              const encodedBlobName = encodeURIComponent(blobName);
-              const blobServiceClient = BlobServiceClient.fromConnectionString(
-                process.env.AZURE_STORAGE_CONNECTION_STRING
-              );
-              const containerClient = blobServiceClient.getContainerClient(
-                process.env.CONTAINER_NAME
-              );
-              await uploadBlobFromLocalPath(
-                containerClient,
-                blobName,
-                filename
-              );
+          if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+            console.log("synthesis finished.");
+            const { audioData } = result;
 
-              const audioUrl = `https://${blobServiceClient.accountName}.blob.core.windows.net/${process.env.CONTAINER_NAME}/${encodedBlobName}`;
-              const duration = await calculateDuration(filename);
+            if (filename) {
+              fs.writeFileSync(filename, Buffer.from(audioData));
 
-              const newAudio = new Audio({
-                title,
-                text: ssml,
-                audioUrl,
-                audioCollection: collection._id,
-                index,
-                audioDuration: duration,
-              });
-              audioCollection.playtime =
-                (audioCollection.playtime || 0) + duration;
-              audioCollection.audios.push({
-                index,
-                audioId: newAudio._id,
-                audioDuration: duration,
-              });
-              await audioCollection.save();
-              await newAudio.save();
+              try {
+                const timestamp = new Date()
+                  .toISOString()
+                  .replace(/[:.]/g, "-");
+                const blobName = `${title}-${timestamp}.mp3`;
+                const encodedBlobName = encodeURIComponent(blobName);
+                const blobServiceClient =
+                  BlobServiceClient.fromConnectionString(
+                    process.env.AZURE_STORAGE_CONNECTION_STRING
+                  );
+                const containerClient = blobServiceClient.getContainerClient(
+                  process.env.CONTAINER_NAME
+                );
 
-              fs.unlinkSync(filename);
+                await uploadBlobFromLocalPath(
+                  containerClient,
+                  blobName,
+                  filename
+                );
 
-              resolve({audioUrl, audioCollection});
-            } catch (uploadError) {
-              reject(uploadError);
+                const audioUrl = `https://${blobServiceClient.accountName}.blob.core.windows.net/${process.env.CONTAINER_NAME}/${encodedBlobName}`;
+                const duration = await calculateDuration(filename);
+
+                const newAudio = new Audio({
+                  title: `${(index + 1).toString().padStart(2, "0")}-${
+                    collection.title.length < 30
+                      ? collection.title
+                      : collection.title.slice(0, 30) + ".."
+                  }`,
+                  text: ssml,
+                  audioUrl,
+                  audioCollection: collection._id,
+                  index,
+                  audioDuration: duration,
+                  voice,
+                });
+
+                audioCollection.playtime =
+                  (audioCollection.playtime || 0) + duration;
+                audioCollection.audios.push({
+                  index,
+                  audioId: newAudio._id,
+                  audioDuration: duration,
+                });
+
+                await audioCollection.save();
+                await newAudio.save();
+                console.log(audioCollection);
+
+                // fs.unlinkSync(filename);
+
+                resolve({ audioUrl, audioCollection });
+              } catch (uploadError) {
+                reject(uploadError);
+              }
+            } else {
+              const bufferStream = new PassThrough();
+              bufferStream.end(Buffer.from(audioData));
+              resolve(bufferStream);
             }
           } else {
-            const bufferStream = new PassThrough();
-            bufferStream.end(Buffer.from(audioData));
-            resolve(bufferStream);
+            reject(
+              new Error(`Speech synthesis failed: ${result.errorDetails}`)
+            );
           }
         },
         (error) => {

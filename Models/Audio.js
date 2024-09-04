@@ -1,37 +1,41 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Define the schema for the audio model
 const audioSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true
+    required: true,
   },
   text: {
-    type: String
+    type: String,
   },
   audioUrl: {
     type: String,
-    required: true
+    required: true,
   },
   audioDuration: {
     type: Number,
-    required: true
+    required: true,
   },
   audioCollection: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'AudioCollection'
+    ref: "AudioCollection",
   },
   date: {
     type: Date,
-    default: Date.now
-},
+    default: Date.now,
+  },
   index: {
     type: Number,
-    required: true
-  }
+    required: true,
+  },
+  voice: {
+    type: String,
+    default: "default voice",
+  },
 });
 
 // Create the audio model
-const Audio = mongoose.model('Audio', audioSchema);
+const Audio = mongoose.model("Audio", audioSchema);
 
 module.exports = Audio;

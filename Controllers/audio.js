@@ -119,35 +119,68 @@ const getAllCollections = async (req, res) => {
   }
 };
 
+async function moveCollectionToStart(userId, collectionId) {
+  try {
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Find the index of the collection with the given collectionId
+    const collectionIndex = user.audioCollections.findIndex(
+      (collection) =>
+        collection.collectionId.toString() === collectionId.toString()
+    );
+
+    if (collectionIndex === -1) {
+      throw new Error("Collection not found");
+    }
+
+    // Remove the collection from its current position
+    const [collection] = user.audioCollections.splice(collectionIndex, 1);
+
+    // Add the collection to the start of the array
+    user.audioCollections.unshift(collection);
+
+    // Save the updated user document
+    await user.save();
+
+    console.log("Collection moved to the start successfully");
+  } catch (error) {
+    console.error("Error moving collection to start:", error);
+  }
+}
+
 // Controller to get audio by collection
 const getAudioByCollectionId = async (req, res) => {
   try {
     const { collectionId } = req.query;
-    let audioCollection = await AudioCollection.findById(collectionId).exec();
+    moveCollectionToStart(req.user._id, collectionId);
 
-    // If no audioCollection records are found for the collection id, respond with a 404 status code
+    // Find the audio collection by collectionId
+    const audioCollection = await AudioCollection.findById(collectionId).exec();
+
+    // If no audioCollection records are found, respond with a 404 status code
     if (!audioCollection) {
-      return res
-        .status(404)
-        .json({ message: "Audio not found for the specified collection" });
+      return res.status(404).json({
+        message: "Audio collection not found for the specified collection",
+      });
     }
 
-    // Get the current user's ID
-    if (audioCollection?.access === "private") {
-      // Find the user by ID and check if the collectionId exists in the user's audioCollectionIds array
+    // Check access permissions if the collection is private
+    if (audioCollection.access === "private") {
       const userId = req.user._id;
       const user = await User.findById(userId);
       if (!user) {
         return res.status(401).json({ error: "User not found" });
       }
 
-      // Query the database to find audio records that belong to the specified collection
       if (
-        !user.audioCollections.some((item) => {
-          return item.collectionId.equals(
-            mongoose.Types.ObjectId(collectionId)
-          );
-        })
+        !user.audioCollections.some((item) =>
+          item.collectionId.equals(mongoose.Types.ObjectId(collectionId))
+        )
       ) {
         return res.status(401).json({
           message: "You cannot access this collection because it is private.",
@@ -155,8 +188,14 @@ const getAudioByCollectionId = async (req, res) => {
       }
     }
 
-    // If audio records are found, respond with the audio data
-    res.status(200).json(audioCollection.audios);
+    // Extract audio IDs from the audioCollection
+    const audioIds = audioCollection.audios.map((audio) => audio.audioId);
+
+    // Fetch the full audio objects from the Audio model
+    const audios = await Audio.find({ _id: { $in: audioIds } }).exec();
+
+    // Respond with the full audio data
+    res.status(200).json(audios);
   } catch (error) {
     // Handle errors
     console.error(error);
@@ -367,21 +406,27 @@ const generateRandomToken = () => {
 };
 
 const processRemainingChunks = async (index, collection, processguide, res) => {
-  const { module, moduleDescription, voiceActorsArray } = processguide;
-  const textChunks = collection.textChunks;
+  const {
+    module,
+    moduleDescription,
+    voiceActorsArray,
+    firstResult,
+    previousPage,
+  } = processguide;
+  const textChunks = collection?.textChunks;
 
   if (index < textChunks.length) {
     try {
       const result = await processTextChunks(
-        textChunks[index - 1],
+        index === 1 ? firstResult : previousPage,
         textChunks[index],
         module,
         moduleDescription,
         voiceActorsArray,
+        textChunks.length - 1 == index,
         res
       );
       console.log("result: ", result);
-      console.log("collection: ", collection);
       const { audioCollection } = await processAudioFiles(
         result,
         collection,
@@ -394,11 +439,15 @@ const processRemainingChunks = async (index, collection, processguide, res) => {
         message: `Successfully generated audio for page ${index + 1}`,
         currentIndex: index + 1,
       });
+      console.log(`finished ${index} processing`);
 
       await processRemainingChunks(
         index + 1,
         audioCollection,
-        processguide,
+        {
+          ...processguide,
+          previousPage: result.textChunks.map((item) => item.text).join(" "),
+        },
         res
       );
     } catch (error) {
@@ -432,7 +481,10 @@ const handleAudioCreation = async (req, res) => {
       res
     );
     console.log("textChunks.length: ", textChunks.length);
-    console.log("textChunks: ", textChunks);
+    console.log("textChunksFinal: ", textChunks);
+    // return res.status(200).json({
+    //   textChunks,
+    // });
 
     if (text?.length > 0) {
       textChunks.unshift(text);
@@ -466,10 +518,11 @@ const handleAudioCreation = async (req, res) => {
 
     const firstResult = await processTextChunks(
       null,
-      text || textChunks[0],
+      textChunks[0],
       module,
       moduleDescription,
       voiceActorsArray,
+      false,
       res
     );
     console.log("firsttextChunk: ", textChunks[0]);
@@ -481,6 +534,7 @@ const handleAudioCreation = async (req, res) => {
       0,
       module,
       voiceActorsArray,
+      false,
       res
     );
     // return res.json({
@@ -495,6 +549,9 @@ const handleAudioCreation = async (req, res) => {
           module,
           moduleDescription,
           voiceActorsArray,
+          firstResult: firstResult.textChunks
+            .map((item) => item.text)
+            .join(" "),
         },
         res
       );
@@ -546,6 +603,8 @@ const continueAudioCreation = async (req, res) => {
         module,
         moduleDescription,
         voiceActorsArray,
+        firstResult: collection.textChunks[0],
+        previousPage: collection.textChunks[currentIndex - 1],
       },
       res
     );

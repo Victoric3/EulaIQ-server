@@ -13,7 +13,7 @@ const client = createClient(endpoint, credential);
 
 const features = ["Read"];
 
-const performOCR = async (imageBuffer) => {
+const performOCR = async (imageBuffer, res) => {
   try {
     const result = await client.path("/imageanalysis:analyze").post({
       body: imageBuffer,

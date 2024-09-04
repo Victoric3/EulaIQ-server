@@ -7,7 +7,7 @@
     "node": "20.11.1"
   },
   "scripts": {
-    "start": "node server.js & node worker.js & node connectRedis.js",
+    "start": "node server.js",
     "start:dev": "concurrently \"nodemon server.js\" \"nodemon worker.js\" \"nodemon connectRedis.js\"",
     "start:server": "nodemon server.js",
     "start:pupeter": "nodemon pupeter.js"
