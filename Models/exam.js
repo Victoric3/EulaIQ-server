@@ -6,10 +6,6 @@ const examSchema = new mongoose.Schema({
       unique: true,
       required: true
     },
-    type: {
-      type: String,
-      default: ''
-    },
     difficulty: {
       type: String,
       default: 'not specified'
@@ -38,6 +34,10 @@ const examSchema = new mongoose.Schema({
       username: String,
       photo: String
   },
+    textChunks: {
+      type: [String],
+      default: []
+    },
     questions: [{
       examBody: {
         type: String,
@@ -78,6 +78,10 @@ const examSchema = new mongoose.Schema({
       explanation: {
         type: String,
         default: "no official explanation is available at this time",
+      },
+      reference: {
+        type: String,
+        default: "No reference was provided for this material",
       },
       image: {
         type: String,

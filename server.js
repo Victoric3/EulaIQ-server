@@ -25,7 +25,11 @@ rateLimit({
     return req.user;
   },
 });
-app.use(cors());
+const corsOptions = {
+  origin: process.env.URL,
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(cookieParser());
 
 const server = http.createServer(app);

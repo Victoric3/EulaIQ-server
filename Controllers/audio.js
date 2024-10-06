@@ -424,6 +424,13 @@ const processRemainingChunks = async (index, collection, processguide, res) => {
         moduleDescription,
         voiceActorsArray,
         textChunks.length - 1 == index,
+        'audio',
+        `
+      You are specifically designed for creating audio resources from educational textbooks. Your task is to convert textbook material into engaging and clear audio content using Azure Text-to-Speech (TTS). Follow these guidelines to produce high-quality output:
+      - Mathematical Values: Translate mathematical expressions into spoken language that clearly conveys the concept in an understandable manner.
+      - Voice Roles and Dialogue: Assign distinct voices to different characters or sections, ensuring a seamless and natural dialogue flow without voice names being announced. You are only allowed to use the voice(s): ${voiceActors}.
+      Ensure there are no other responses aside from the output, e.g., output = {json data}, not output = "here's a json...{json data}", this is to ensure the json object can be parsed easily.
+      `,
         res
       );
       console.log("result: ", result);
@@ -478,10 +485,11 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       file,
       text,
+      'audio',
       res
     );
-    console.log("textChunks.length: ", textChunks.length);
-    console.log("textChunksFinal: ", textChunks);
+    // console.log("textChunks.length: ", textChunks.length);
+    // console.log("textChunksFinal: ", textChunks);
     // return res.status(200).json({
     //   textChunks,
     // });
@@ -523,6 +531,13 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       voiceActorsArray,
       false,
+      'audio',
+      `
+      You are specifically designed for creating audio resources from educational textbooks. Your task is to convert textbook material into engaging and clear audio content using Azure Text-to-Speech (TTS). Follow these guidelines to produce high-quality output:
+      - Mathematical Values: Translate mathematical expressions into spoken language that clearly conveys the concept in an understandable manner.
+      - Voice Roles and Dialogue: Assign distinct voices to different characters or sections, ensuring a seamless and natural dialogue flow without voice names being announced. You are only allowed to use the voice(s): ${voiceActors}.
+      Ensure there are no other responses aside from the output, e.g., output = {json data}, not output = "here's a json...{json data}", this is to ensure the json object can be parsed easily.
+      `,
       res
     );
     console.log("firsttextChunk: ", textChunks[0]);

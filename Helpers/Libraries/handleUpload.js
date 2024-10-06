@@ -197,8 +197,8 @@ const handleMultipleImageUpload = async (req, res, next) => {
 
 const handleFileUpload = (req, res, next) => {
   console.log("started file upload");
-    const acceptedFileTypes = [
-      ".pdf",
+  const acceptedFileTypes = [
+    ".pdf",
     ".docx",
     ".json",
     ".txt",
@@ -214,18 +214,18 @@ const handleFileUpload = (req, res, next) => {
     if (err) {
       return next(err);
     }
-    
+
     const file = req.file;
     // Check if there is a file in the request
     if (!file) {
       // No file provided, continue to the next middleware
       return next(new Error("No file uploaded"));
     }
-    
+
     // Get the file extension
     const fileExtension = path.extname(file.originalname).toLowerCase();
     console.log("fileExtension: ", fileExtension);
-    
+
     // Check if the file type is accepted
     if (!acceptedFileTypes.includes(fileExtension)) {
       return res.status(400).json({ error: "Unsupported file type" });
@@ -242,7 +242,6 @@ const handleFileUpload = (req, res, next) => {
     // Continue to the next middleware
     next();
   });
-
 };
 
 module.exports = {

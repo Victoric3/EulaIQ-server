@@ -3,6 +3,7 @@ const { BlobServiceClient } = require("@azure/storage-blob");
 const { Buffer } = require("buffer");
 const { PassThrough } = require("stream");
 const fs = require("fs");
+const path = require("path");
 const Audio = require("../../Models/Audio");
 const AudioCollection = require("../../Models/AudioCollection");
 
@@ -19,6 +20,18 @@ const calculateDuration = async (filePath) => {
   const mm = await import("music-metadata");
   const metadata = await mm.parseFile(filePath);
   return metadata.format.duration;
+};
+
+// Helper function to create a folder based on the title if it doesn't exist
+const createFolderIfNotExists = (title) => {
+  const folderName = title.length < 30 ? title : title.slice(0, 30);
+  const folderPath = path.join(__dirname, folderName);
+
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+
+  return folderPath;
 };
 
 const textToSpeech = async (
@@ -39,9 +52,16 @@ const textToSpeech = async (
       speechConfig.speechSynthesisOutputFormat =
         sdk.SpeechSynthesisOutputFormat.Audio24Khz160KBitRateMonoMp3;
 
-      const audioConfig = filename
-        ? sdk.AudioConfig.fromAudioFileOutput(filename)
-        : null;
+      // Create the folder based on the title
+      const folderPath = createFolderIfNotExists(title);
+
+      // Create the output file name (index + collection title)
+      const outputFile = `${(index + 1)
+        .toString()
+        .padStart(2, "0")}-${title}.mp3`;
+      const filePath = path.join(folderPath, outputFile);
+
+      const audioConfig = sdk.AudioConfig.fromAudioFileOutput(filePath);
       const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
 
       console.log("ssml: ", ssml);
@@ -55,7 +75,7 @@ const textToSpeech = async (
             const { audioData } = result;
 
             if (filename) {
-              fs.writeFileSync(filename, Buffer.from(audioData));
+              fs.writeFileSync(filePath, Buffer.from(audioData));
 
               try {
                 const timestamp = new Date()
@@ -74,11 +94,11 @@ const textToSpeech = async (
                 await uploadBlobFromLocalPath(
                   containerClient,
                   blobName,
-                  filename
+                  filePath
                 );
 
                 const audioUrl = `https://${blobServiceClient.accountName}.blob.core.windows.net/${process.env.CONTAINER_NAME}/${encodedBlobName}`;
-                const duration = await calculateDuration(filename);
+                const duration = await calculateDuration(filePath);
 
                 const newAudio = new Audio({
                   title: `${(index + 1).toString().padStart(2, "0")}-${
@@ -105,8 +125,6 @@ const textToSpeech = async (
                 await audioCollection.save();
                 await newAudio.save();
                 console.log(audioCollection);
-
-                // fs.unlinkSync(filename);
 
                 resolve({ audioUrl, audioCollection });
               } catch (uploadError) {

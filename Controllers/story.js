@@ -160,14 +160,14 @@ const editStoryPage  =asyncErrorWrapper(async(req,res,next)=>{
 
 
 const editStory  =asyncErrorWrapper(async(req,res,next)=>{
-    const {slug } = req.params ; 
+    const {slug } = req.params; 
     const {title ,content ,image ,previousImage } = req.body;
 
     const story = await Story.findOne({slug : slug })
 
-    story.title = title ;
-    story.content = content ;
-    story.image =   req.fileLink ;
+    story.title = title;
+    story.content = content;
+    story.image =   req.fileLink;
 
     if( !req.fileLink) {
         // if the image is not sent

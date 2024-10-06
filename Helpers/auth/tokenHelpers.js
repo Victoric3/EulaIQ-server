@@ -19,10 +19,12 @@ const sendToken = (user, statusCode, res, message) => {
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ), // Cookie expiry set to the value in the environment variable
-    httpOnly: process.env.NODE_ENV === "production", // Cookie cannot be accessed through client-side scripts
-    secure: process.env.NODE_ENV === "production", // Send cookie only over HTTPS in production
+    ),
+    httpOnly: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
   };
+  console.log("token: ", token);
+
   // Send the response
   return res.status(statusCode).cookie("token", token, cookieOptions).json({
     status: "success",

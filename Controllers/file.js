@@ -52,7 +52,7 @@ const handleTextExtraction = async (file) => {
     const pagesContent = [];
 
     for (const { text, position } of contents) {
-      const pageIndex = position.pageIndex;
+      const pageIndex = position?.pageIndex;
 
       // Initialize page content array if it doesn't exist
       if (!pagesContent[pageIndex]) {
@@ -82,6 +82,7 @@ const handleTextProcessing = async (
   moduleDescription,
   file,
   text,
+  type,
   res
 ) => {
   let pageTexts = [];
@@ -118,14 +119,14 @@ const handleTextProcessing = async (
     const firstTextChunk =
       text?.length > 0 ? text : textChunks[0] + textChunks[1] + textChunks[2];
     console.log("firstTextChunk: ", firstTextChunk);
-    const query = describe(firstTextChunk, module, moduleDescription);
+    const query = describe(firstTextChunk, module, moduleDescription, type);
 
     const extractedDescription = await retry(
       async () => {
         const description = await azureOpenai(
           query,
-          `you are an audio resource describer, return a text describing the audio to serve as an introduction to it, use very simple language`,
-          "gpt-4o"
+          `you are an ${type} resource describer, return a text describing the ${type} collection to serve as an introduction to it, use very simple language`,
+          "gpt-4o-mini"
         );
         return extractAndParseJSON(description);
       },
@@ -143,25 +144,25 @@ const handleTextProcessing = async (
       !extractedDescription.extractionEfficiency &&
         file.mimetype === "application/pdf"
     );
-    if (
-      firstTextChunk.length < 20 ||
-      (!extractedDescription.extractionEfficiency &&
-        file.mimetype === "application/pdf")
-    ) {
-      const pageImages = await retry(() => pdfToImage(file.buffer));
-      for (let i = 0; i < pageImages.length; i++) {
-        if (!pageTexts[i]) {
-          pageTexts[i] = [];
-        }
+    // if (
+    //   firstTextChunk.length < 20 ||
+    //   (!extractedDescription.extractionEfficiency &&
+    //     file.mimetype === "application/pdf")
+    // ) {
+    //   const pageImages = await retry(() => pdfToImage(file.buffer));
+    //   for (let i = 0; i < pageImages.length; i++) {
+    //     if (!pageTexts[i]) {
+    //       pageTexts[i] = [];
+    //     }
 
-        const ocrResult = await retry(() =>
-          performOCR(pageImages[i].imageBuffer, res)
-        );
-        const text = extractTextFromOCR(ocrResult);
-        pageTexts[i].push(text);
-      }
-      textChunks = pageTexts.map((textChunk) => textChunk.join(" "));
-    }
+    //     const ocrResult = await retry(() =>
+    //       performOCR(pageImages[i].imageBuffer, res)
+    //     );
+    //     const text = extractTextFromOCR(ocrResult);
+    //     pageTexts[i].push(text);
+    //   }
+    //   textChunks = pageTexts.map((textChunk) => textChunk.join(" "));
+    // }
     console.log("textChunksAdvancedOcR: ", textChunks);
 
     return {
