@@ -57,7 +57,7 @@ const queryCreator = (
           : "simply continue from were you stoped in the previous page, don't say lets continue, just start with the next word after the last word in the previous page"
       }, and this is ${!lastPart && "not "} the last part so ${
         !lastPart && "do not "
-      } make a conclusion at the ending of the material, also ensure to discuss all parts of the material.`,
+      } make a conclusion at the ending of the material, also ensure to discuss all parts of the material. i have added the previous page and current page to give context of what must have been talked about prevoiusly`,
       previousPage: previousPage,
       currentPage: currentPage,
       output: output(voiceActors),

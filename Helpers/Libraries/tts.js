@@ -91,11 +91,11 @@ const textToSpeech = async (
                   process.env.CONTAINER_NAME
                 );
 
-                await uploadBlobFromLocalPath(
-                  containerClient,
-                  blobName,
-                  filePath
-                );
+                // await uploadBlobFromLocalPath(
+                //   containerClient,
+                //   blobName,
+                //   filePath
+                // );
 
                 const audioUrl = `https://${blobServiceClient.accountName}.blob.core.windows.net/${process.env.CONTAINER_NAME}/${encodedBlobName}`;
                 const duration = await calculateDuration(filePath);

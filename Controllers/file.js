@@ -126,7 +126,7 @@ const handleTextProcessing = async (
         const description = await azureOpenai(
           query,
           `you are an ${type} resource describer, return a text describing the ${type} collection to serve as an introduction to it, use very simple language`,
-          "gpt-4o-mini"
+          "gpt-4o"
         );
         return extractAndParseJSON(description);
       },

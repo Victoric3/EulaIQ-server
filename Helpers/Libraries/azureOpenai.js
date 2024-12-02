@@ -53,13 +53,13 @@ const processTextChunks = async (
     let result;
     if (textChunks.length < 20) {
       result =
-        module == "audio"
+        module == "simplified"
           ? `{
         textChunks: [
         { 
-          voice: ${voiceActor[0] || "en-US-NovaMultilingualNeural"},
+          voice: "${voiceActors[0] || "en-US-NovaMultilingualNeural"}",
           text: "this page looks empty it only contains: ${textChunks}",
-          keywords: [empty],
+          keywords: ['empty'],
         }
       ]
     }`
@@ -76,7 +76,7 @@ const processTextChunks = async (
       );
 
       console.log('query: ', query)
-      result = await azureOpenai(query, systemInstruction, "gpt-4o-mini");
+      result = await azureOpenai(query, systemInstruction, "gpt-4o");
     }
     // Clean GPT-4's result for audio generation
     const cleanedResultData = extractAndParseJSON(result);

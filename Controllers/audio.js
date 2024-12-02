@@ -424,11 +424,11 @@ const processRemainingChunks = async (index, collection, processguide, res) => {
         moduleDescription,
         voiceActorsArray,
         textChunks.length - 1 == index,
-        'audio',
+        "audio",
         `
       You are specifically designed for creating audio resources from educational textbooks. Your task is to convert textbook material into engaging and clear audio content using Azure Text-to-Speech (TTS). Follow these guidelines to produce high-quality output:
       - Mathematical Values: Translate mathematical expressions into spoken language that clearly conveys the concept in an understandable manner.
-      - Voice Roles and Dialogue: Assign distinct voices to different characters or sections, ensuring a seamless and natural dialogue flow without voice names being announced. You are only allowed to use the voice(s): ${voiceActors}.
+      - Voice Roles and Dialogue: Assign distinct voices to different characters or sections, ensuring a seamless and natural dialogue flow without voice names being announced. You are only allowed to use the voice(s): ${voiceActorsArray}.
       Ensure there are no other responses aside from the output, e.g., output = {json data}, not output = "here's a json...{json data}", this is to ensure the json object can be parsed easily.
       `,
         res
@@ -477,7 +477,8 @@ const handleAudioCreation = async (req, res) => {
   const file = req.uploadedFile;
   // console.log("file: ", file);
   const { voiceActors, module, moduleDescription, text } = req.body;
-  const voiceActorsArray = voiceActors;
+  console.log("voiceActors: ", voiceActors);
+  const voiceActorsArray = JSON.parse(voiceActors);
 
   try {
     const { textChunks, description } = await handleTextProcessing(
@@ -485,7 +486,7 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       file,
       text,
-      'audio',
+      "audio",
       res
     );
     // console.log("textChunks.length: ", textChunks.length);
@@ -531,7 +532,7 @@ const handleAudioCreation = async (req, res) => {
       moduleDescription,
       voiceActorsArray,
       false,
-      'audio',
+      "audio",
       `
       You are specifically designed for creating audio resources from educational textbooks. Your task is to convert textbook material into engaging and clear audio content using Azure Text-to-Speech (TTS). Follow these guidelines to produce high-quality output:
       - Mathematical Values: Translate mathematical expressions into spoken language that clearly conveys the concept in an understandable manner.

@@ -59,7 +59,7 @@ const processRemainingQuestions = async (
     questionDescription,
   } = processGuide;
   const textChunks = collection?.textChunks;
-    
+
   if (index < textChunks.length) {
     try {
       const result = await processTextChunks(
@@ -130,7 +130,6 @@ const processRemainingQuestions = async (
     });
   }
 };
-
 
 exports.handleQuestionGeneration = async (req, res) => {
   try {
@@ -296,10 +295,9 @@ exports.continueQuestionGeneration = async (req, res) => {
   }
 };
 
-// Function to fetch exam questions and format them
 exports.fetchExamData = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, QandA = false } = req.body;
 
     // Fetch exam data by the exam name
     const examData = await Exam.findOne({ name });
@@ -318,24 +316,49 @@ exports.fetchExamData = async (req, res) => {
       // Format the question section
       questions += `\nQuestion ${index + 1}:\n${exam.question}\n`;
 
-      exam.options.forEach((option, i) => {
-        const optionLetter = String.fromCharCode(65 + i); // A, B, C, D...
-        questions += `${optionLetter}: ${option}\n`;
-      });
-      const correctOptionIndex = parseInt(exam.correctOption, 10);
-      // Format the answers and explanations section
-      const correctOptionLetter = String.fromCharCode(65 + correctOptionIndex); // A, B, C, D
-      answers += `\nAnswer ${index + 1}: ${correctOptionLetter}\n`;
-      answers += `Explanation: ${exam.explanation}\n`;
-      answers += `Reference: ${exam.reference}\n\n`;
+      // Add options based on QandA parameter
+      if (QandA) {
+        exam.options.forEach((option, i) => {
+          const optionLetter = String.fromCharCode(65 + i); // A, B, C, D...
+          questions += `${optionLetter}: ${option}\n`;
+        });
+
+        const correctOptionIndex = parseInt(exam.correctOption, 10);
+        const correctOptionLetter = String.fromCharCode(
+          65 + correctOptionIndex
+        );
+
+        questions += `Correct Answer: ${correctOptionLetter}\n`;
+        questions += `Explanation: ${exam.explanation}\n`;
+        questions += `Reference: ${exam.reference}\n`;
+      }
+
+      // Traditional answer formatting (separate from questions)
+      if (!QandA) {
+        exam.options.forEach((option, i) => {
+          const optionLetter = String.fromCharCode(65 + i); // A, B, C, D...
+          questions += `${optionLetter}: ${option}\n`;
+        });
+
+        const correctOptionIndex = parseInt(exam.correctOption, 10);
+        // Format the answers and explanations section
+        const correctOptionLetter = String.fromCharCode(
+          65 + correctOptionIndex
+        ); // A, B, C, D
+        answers += `\nAnswer ${index + 1}: ${correctOptionLetter}\n`;
+        answers += `Explanation: ${exam.explanation}\n`;
+        answers += `Reference: ${exam.reference}\n\n`;
+      }
     });
 
     // Construct the final output with clean line breaks
-    const formattedResponse = `Questions:\n${questions}\nAnswers:\n${answers}`;
+    const formattedResponse = QandA
+      ? `Exam Questions With Answers:\n${questions}`
+      : `Questions:\n${questions}\nAnswers:\n${answers}`;
 
     // --- Create PDF and save it locally ---
     const doc = new PDFDocument();
-    const pdfPath = path.join(__dirname, `${name}.pdf`); // Save the file in the current directory
+    const pdfPath = path.join(__dirname, `${name}-${QandA && 'QandA'}.pdf`);
 
     const writeStream = fs.createWriteStream(pdfPath);
     doc.pipe(writeStream);
@@ -344,8 +367,10 @@ exports.fetchExamData = async (req, res) => {
     doc.fontSize(16).text(`Exam Questions On ${name}`, { underline: true });
     doc.fontSize(12).moveDown().text(questions);
 
-    doc.fontSize(16).text("Answers", { underline: true });
-    doc.fontSize(12).moveDown().text(answers);
+    if (!QandA) {
+      doc.fontSize(16).text("Answers", { underline: true });
+      doc.fontSize(12).moveDown().text(answers);
+    }
 
     // Finalize the PDF and close the stream
     doc.end();

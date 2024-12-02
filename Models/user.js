@@ -12,6 +12,29 @@ dotenv.config({ path: './config.env' });
 const UserSchema = new mongoose.Schema({
     firstname: String,
     lastname: String,
+    birthdate: {
+        type: String,
+        default: 'Not available'
+      },
+      interests: {
+        type: [String],
+        default: [
+          "Romance",
+        ],
+      },
+      isAnonymous: {
+        type: Boolean,
+        default: false
+      },
+      anonymousId: {
+        type: String,
+        unique: true
+      },
+      accountType: {
+        type: String,
+        enum: ['anonymous', 'registered', 'converted'],
+        default: 'registered'
+      },
     grade: String,
     temporary: Boolean,
     username : {
