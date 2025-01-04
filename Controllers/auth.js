@@ -86,19 +86,12 @@ const register = async (req, res) => {
         });
       }
 
-      await Promise.all(
-        [
-          existingUser.save(),
-          //send welcome email to new user
-          new Email(existingUser, `${process.env.URL}`).sendWelcome()
-        ]
-      )
-      return sendToken(
-        existingUser,
-        200,
-        res,
-        "registration successful"
-      );
+      await Promise.all([
+        existingUser.save(),
+        //send welcome email to new user
+        new Email(existingUser, `${process.env.URL}`).sendWelcome(),
+      ]);
+      return sendToken(existingUser, 200, res, "registration successful");
     }
 
     if (anonymousUser) {
@@ -119,13 +112,11 @@ const register = async (req, res) => {
         });
       }
 
-      await Promise.all(
-        [
-          anonymousUser.save(),
-          //send welcome email to new user
-          new Email(anonymousUser, `${process.env.URL}`).sendWelcome()
-        ]
-      )
+      await Promise.all([
+        anonymousUser.save(),
+        //send welcome email to new user
+        new Email(anonymousUser, `${process.env.URL}`).sendWelcome(),
+      ]);
 
       return sendToken(anonymousUser, 200, res, "registration successful");
     }
@@ -152,21 +143,31 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { identity, password, location, ipAddress, deviceInfo, isAnonymous, anonymousId } =
-      req.body;
+    const {
+      identity,
+      password,
+      location,
+      ipAddress,
+      deviceInfo,
+      isAnonymous,
+      anonymousId,
+    } = req.body;
     // console.log(location, ipAddress, deviceInfo);
     const [anonymousUser, user] = await Promise.all([
-      anonymousId ? User.findOne({ anonymousId, isAnonymous: true }).select("+password firstname email") : null,
-      User.findOne({ email: identity}).select(
+      anonymousId
+        ? User.findOne({ anonymousId, isAnonymous: true }).select(
+            "+password firstname email"
+          )
+        : null,
+      User.findOne({ email: identity }).select(
         "+password emailStatus temporary location ipAddress deviceInfo role email firstname username tokenVersion"
       ),
     ]);
-
     console.log("anonymousUser: ", anonymousUser, "user: ", user);
 
     // Early validation checks
     if (isAnonymous && !user) {
-      console.log('user: ', user);
+      console.log("user: ", user);
       //create a token
       const verificationToken = anonymousUser.createToken();
       // console.log("verificationToken: ", verificationToken)
@@ -183,7 +184,8 @@ const login = async (req, res) => {
 
       return res.status(401).json({
         status: "anonymous",
-        errorMessage: "Please check your email to complete your account creation",
+        errorMessage:
+          "Please check your email to complete your account creation",
       });
     }
 
@@ -212,9 +214,9 @@ const login = async (req, res) => {
         location: [location],
         ipAddress: [ipAddress],
         deviceInfo: [deviceInfo],
-        anonymousId
+        anonymousId,
       });
-      console.log("newUserPromise: ", newUserPromise)
+      console.log("newUserPromise: ", newUserPromise);
       const verificationToken = newUserPromise.createToken();
 
       // Perform save and email operations in parallel
@@ -418,29 +420,31 @@ const resetpassword = async (req, res) => {
 };
 
 const confirmEmailAndSignUp = catchAsync(async (req, res, next) => {
-try {
-  const { token } = req.body;
-  //1  get user based on token
-  const hashedToken = crypto.createHash("shake256").update(token).digest("hex");
-  const user = await User.findOne({
-    verificationToken: hashedToken,
-    verificationTokenExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    res.status(400).json({
-      status: "failed",
-      errorMessage: `this token is invalid or has expired`,
+  try {
+    const { token } = req.body;
+    //1  get user based on token
+    const hashedToken = crypto
+      .createHash("shake256")
+      .update(token)
+      .digest("hex");
+    const user = await User.findOne({
+      verificationToken: hashedToken,
+      verificationTokenExpires: { $gt: Date.now() },
     });
-    return;
-  }
-  //2 set verify user status to confirmed
-  user.emailStatus = "confirmed";
-  user.verificationToken = undefined;
-  user.verificationTokenExpires = undefined;
-  await user.save();
 
-    
+    if (!user) {
+      res.status(400).json({
+        status: "failed",
+        errorMessage: `this token is invalid or has expired`,
+      });
+      return;
+    }
+    //2 set verify user status to confirmed
+    user.emailStatus = "confirmed";
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+
     res.status(200).json({
       message: `Your email has been confirmed`,
     });

@@ -473,14 +473,15 @@ const processRemainingChunks = async (index, collection, processguide, res) => {
 };
 
 const handleAudioCreation = async (req, res) => {
-  //access uploaded file
+  //////////////////////////////////////////////////////////
+  //1, access uploaded file
   const file = req.uploadedFile;
-  // console.log("file: ", file);
   const { voiceActors, module, moduleDescription, text } = req.body;
-  console.log("voiceActors: ", voiceActors);
   const voiceActorsArray = JSON.parse(voiceActors);
 
   try {
+    //////////////////////////////////////////////////////////
+    //2, handle processing of the text
     const { textChunks, description } = await handleTextProcessing(
       module,
       moduleDescription,
@@ -489,22 +490,19 @@ const handleAudioCreation = async (req, res) => {
       "audio",
       res
     );
-    // console.log("textChunks.length: ", textChunks.length);
-    // console.log("textChunksFinal: ", textChunks);
-    // return res.status(200).json({
-    //   textChunks,
-    // });
 
+    ////////////////////////////////////////////////////////////
+    //3, adjust text contents or return an error if no content seems to be in the document
     if (text?.length > 0) {
       textChunks.unshift(text);
-      console.log("textChunks with text: ", textChunks);
     } else if (textChunks.length === 0) {
       return res
         .status(400)
         .json({ message: "we couldn't extract any text from the file" });
     }
 
-    //create a collection
+    //////////////////////////////////////////////////////////////////////
+    //4, create an audio collection
     const newCollection = new AudioCollection({
       imageUrl: "https://i.ibb.co/MCPFhMT/headphones-3658441-1920.jpg",
       title: file.originalname,
@@ -513,7 +511,8 @@ const handleAudioCreation = async (req, res) => {
       textChunks: textChunks,
     });
 
-    // Save the new audio collection to the database
+    //////////////////////////////////////////////////
+    //5, Save the new audio collection to the database
     await newCollection.save();
     const userId = req.user._id;
     const user = await User.findById(userId);
@@ -525,6 +524,8 @@ const handleAudioCreation = async (req, res) => {
     });
     await user.save();
 
+    ////////////////////////////////////////////////////////////
+    //6, process the first textChunk for audio creation
     const firstResult = await processTextChunks(
       null,
       textChunks[0],
@@ -543,7 +544,9 @@ const handleAudioCreation = async (req, res) => {
     );
     console.log("firsttextChunk: ", textChunks[0]);
     console.log("firsttextResult: ", firstResult);
-    // Handle audio creation and upload to Azure blob storage for the first text chunk
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    //7, Handle audio creation and upload to Azure blob storage for the first text chunk
     const { audioCollection } = await processAudioFiles(
       firstResult,
       newCollection,
@@ -553,10 +556,8 @@ const handleAudioCreation = async (req, res) => {
       false,
       res
     );
-    // return res.json({
-    //   message: "synthesis finished",
-    //   collection: audioCollection
-    // })
+    
+    //8, if they are more, continue creating them
     if (textChunks.length > 1) {
       await processRemainingChunks(
         1,
@@ -571,24 +572,6 @@ const handleAudioCreation = async (req, res) => {
         },
         res
       );
-
-      // for (let i = 1; i < textChunks.length; i++) {
-      //   textChunkQueue
-      //     .add({
-      //       textChunks,
-      //       module,
-      //       moduleDescription,
-      //       collection: newCollection,
-      //       index: i,
-      //       voiceActors: voiceActorsArray,
-      //     })
-      //     .then((job) => {
-      //       console.log(`Job added for chunk ${i} with job ID: ${job.id}`);
-      //     })
-      //     .catch((err) => {
-      //       console.error(`Error adding job for chunk ${i}:`, err);
-      //     });
-      // }
     } else {
       res.status(200).json({
         message: "successfully generated audio",

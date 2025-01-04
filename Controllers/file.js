@@ -144,25 +144,6 @@ const handleTextProcessing = async (
       !extractedDescription.extractionEfficiency &&
         file.mimetype === "application/pdf"
     );
-    // if (
-    //   firstTextChunk.length < 20 ||
-    //   (!extractedDescription.extractionEfficiency &&
-    //     file.mimetype === "application/pdf")
-    // ) {
-    //   const pageImages = await retry(() => pdfToImage(file.buffer));
-    //   for (let i = 0; i < pageImages.length; i++) {
-    //     if (!pageTexts[i]) {
-    //       pageTexts[i] = [];
-    //     }
-
-    //     const ocrResult = await retry(() =>
-    //       performOCR(pageImages[i].imageBuffer, res)
-    //     );
-    //     const text = extractTextFromOCR(ocrResult);
-    //     pageTexts[i].push(text);
-    //   }
-    //   textChunks = pageTexts.map((textChunk) => textChunk.join(" "));
-    // }
     console.log("textChunksAdvancedOcR: ", textChunks);
 
     return {
