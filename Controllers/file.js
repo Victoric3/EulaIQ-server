@@ -7,161 +7,141 @@ const {
   extractPptxContent,
   extractTxtContent,
 } = require("../Helpers/file/otherFileTypes");
-const {
-  extractTextFromOCR,
-  extractAndParseJSON,
-} = require("../Helpers/input/escapeStrinedJson");
-const { describe } = require("../data/audioModules");
-const { performOCR } = require("../Helpers/file/advancedOcr");
-const { pdfToImage } = require("../Helpers/file/pdfToimg");
-const { azureOpenai } = require("../Helpers/Libraries/azureOpenai");
+const { saveFileAndAddLinkToEbook } = require("../Helpers/file/saveFile");
+const { createEbook, getEbookById } = require("./ebook");
 const path = require("path");
+const { retry } = require("../Helpers/file/retryFunc");
+// const { remove } = require("../Models/comment");
 
-const handleTextExtraction = async (file) => {
+const handleTextExtraction = async (file, ebookId = null, currentPage = 0, ebook = null) => {
   try {
     const fileExtension = path.extname(file.originalname).toLowerCase();
-    let contents = [];
 
+    // If ebookId is null, create ebook using story model, and set ebookId to the id of the created ebook
+    if (!ebookId) {
+      // Assuming createEbook is a function that creates an ebook and returns its id
+      ebookId = await createEbook(file);
+    }
+
+    // If ebook is null, get ebook, save file and add link to ebook
+    if (!ebook) {
+      ebook = await getEbookById(ebookId);
+      await saveFileAndAddLinkToEbook(file, ebook);
+    }
+
+    let response;
+
+    // Extract text from file
     switch (fileExtension) {
       case ".pdf":
-        contents = await extractPdfContent(file.buffer);
+        response = await extractPdfContent(file, ebook, currentPage);
         break;
       case ".docx":
-        contents = await extractDocxContent(file);
+        response = await extractDocxContent(file, ebook, currentPage);
         break;
       case ".json":
-        contents = await extractJsonContent(file);
+        response = await extractJsonContent(file, ebook, currentPage);
         break;
       case ".txt":
-        contents = await extractTxtContent(file);
+        response = await extractTxtContent(file, ebook, currentPage);
         break;
       case ".html":
-        contents = await extractHtmlContent(file);
+        response = await extractHtmlContent(file, ebook, currentPage);
         break;
       case ".csv":
-        contents = await extractCsvContent(file);
+        response = await extractCsvContent(file, ebook, currentPage);
         break;
       case ".pptx":
-        contents = await extractPptxContent(file, []);
+        response = await extractPptxContent(file, ebook, currentPage);
         break;
       default:
         throw new Error(`Unsupported file type: ${file.mimetype}`);
     }
 
-    // Initialize an object to hold text and images grouped by page index
-    const pagesContent = [];
-
-    for (const { text, position } of contents) {
-      const pageIndex = position?.pageIndex;
-
-      // Initialize page content array if it doesn't exist
-      if (!pagesContent[pageIndex]) {
-        pagesContent[pageIndex] = [];
-      }
-
-      if (text) {
-        // Add text to the current text chunk
-        pagesContent[pageIndex].push(text);
-      }
+    if (!ebookId) {
+      throw new Error(`Failed to extract content from file: ${file.originalname}`);
     }
 
-    // Convert the pagesContent object into an array sorted by page index
-    const orderedPagesContent = Object.keys(pagesContent)
-      .sort((a, b) => parseInt(a) - parseInt(b))
-      .map((pageIndex) => pagesContent[pageIndex]);
-
-    return orderedPagesContent;
+    return response;
   } catch (error) {
-    console.error("Error handling text conversion:", error);
-    throw error;
+    console.error(`Error handling text extraction for file ${file.originalname}:`, error);
+    throw new Error(`Error handling text extraction for file ${file.originalname}: ${error.message || error}`);
   }
 };
 
-const handleTextProcessing = async (
-  module,
-  moduleDescription,
-  file,
-  text,
-  type,
-  res
-) => {
-  let pageTexts = [];
-  let textChunks;
-  const maxRetries = 3;
+// const handleTextProcessing = async (file, ebookId = null) => {
 
-  const retry = async (fn, retries = maxRetries, res) => {
-    let lastError;
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error;
-        console.log(`Attempt ${attempt} failed. Retrying...`);
-        if (res) {
-          res.io.emit("text-processing-progress", {
-            message: `Attempt ${attempt} failed. Retrying...`,
-            attempt,
-            error: error.message,
-          });
-        }
-      }
-    }
-    throw lastError;
-  };
+//   // -----------------currently for ReferenceError will be removed later----------------
+//   //confirm pdf file name with out extension is the same as the ebook name, if not or if there's no pdf fetch the pdf from azure blob
+//   // if (ebook && ebook.fileUrl !== pdfFile.name.split(".")[0]) {
+//     //   pdfFile = await fetchFileFromBlob(ebook.fileUrl);
+//     // }
+//     // -----------------currently for ReferenceError will be removed later----------------
 
+//     try {
+//     console.log("Started extracting file text");
+
+//     if (file) {
+//       ebookId = await retry(() => handleTextExtraction(file, ebookId), 3, res);
+//     }
+
+//     return {
+//       ebookId,
+//     };
+//   } catch (error) {
+//     console.error("Error during text processing:", error);
+
+//     if (res && res.io) {
+//       res.io.emit("text-processing-error", {
+//         message: "Error during text processing",
+//         error: error.message,
+//       });
+//     }
+
+//     throw error;
+//   }
+// };
+
+const handlegenerateEbook = async (req, res) => {
   try {
-    console.log("started extracting file text");
-    if (file) {
-      textChunks = await retry(() => handleTextExtraction(file), 3, res);
+    const file = req.file;
+    const ebookId = await createEbook(req, file);
+    console.log("ebookId", ebookId);
+    const ebook = await getEbookById(ebookId);
+    let response;
+    Promise.all([
+      response = await handleTextExtraction(file, ebookId, res, 0, ebook),
+      await saveFileAndAddLinkToEbook(file, ebook),
+    ]);
+    console.log("response", response);
+    if(response.status === "success"){
+      res.status(200).json({message: "Ebook generated successfully", ebookId});
     }
-    textChunks = textChunks.map((textChunk) => textChunk.join(" "));
-    console.log("textChunks: ", textChunks);
-    const firstTextChunk =
-      text?.length > 0 ? text : textChunks[0] + textChunks[1] + textChunks[2];
-    console.log("firstTextChunk: ", firstTextChunk);
-    const query = describe(firstTextChunk, module, moduleDescription, type);
-
-    const extractedDescription = await retry(
-      async () => {
-        const description = await azureOpenai(
-          query,
-          `you are an ${type} resource describer, return a text describing the ${type} collection to serve as an introduction to it, use very simple language`,
-          "gpt-4o"
-        );
-        return extractAndParseJSON(description);
-      },
-      3,
-      res
-    );
-
-    console.log("extractedDescription :", extractedDescription);
-    // return{
-    //   textChunks
-    // };
-    console.log("firstTextChunk.length < 20: ", firstTextChunk.length < 20);
-    console.log(
-      "!extractedDescription.extractionEfficiency && file.mimetype === application/pdf: ",
-      !extractedDescription.extractionEfficiency &&
-        file.mimetype === "application/pdf"
-    );
-    console.log("textChunksAdvancedOcR: ", textChunks);
-
-    return {
-      textChunks,
-      description: extractedDescription,
-    };
-  } catch (error) {
-    console.log(error);
-    res.io.emit("text-processing-error", {
-      message: "Error during text processing",
-      error: error.message,
-    });
-    throw error;
+  }catch(error){
+    console.error("Error generating ebook:", error);
+    res.status(500).json({errorMessage: `Error generating ebook: ${error.message || error}`});
   }
 };
 
 module.exports = {
   extractPdfContent,
   handleTextExtraction,
-  handleTextProcessing,
+  handlegenerateEbook,
 };
+
+
+      //for refrence, incase i need to describe at some other point in the code
+      // const query = describe(firstTextChunk, module, moduleDescription, type);
+  
+      // const extractedDescription = await retry(
+      //   async () => {
+      //     const description = await azureOpenai(
+      //       query,
+      //       `you are an ${type} resource describer, return a text describing the ${type} collection to serve as an introduction to it, use very simple language`,
+      //       "gpt-4o"
+      //     );
+      //     return extractAndParseJSON(description);
+      //   },
+      //   3,
+      //   res
+      // );

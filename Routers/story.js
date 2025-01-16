@@ -16,11 +16,13 @@ const {
   checkStoryExist,
   checkUserAndStoryExist,
 } = require("../Middlewares/database/databaseErrorhandler");
-const { handleImageUpload } = require("../Helpers/Libraries/handleUpload");
+const { handleImageUpload, handleFileUpload } = require("../Helpers/Libraries/handleUpload");
+const { handlegenerateEbook } = require("../Controllers/file");
 
 const router = express.Router();
 
 router.post("/addstory", [getAccessToRoute, handleImageUpload], addStory);
+router.post("/handlegenerate", [getAccessToRoute, handleFileUpload], handlegenerateEbook);
 router.post("/addImage", [getAccessToRoute, handleImageUpload], addImage);
 
 router.get("/:slug", [getAccessToRoute, checkStoryExist], detailStory);

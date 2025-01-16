@@ -1,184 +1,61 @@
-const { ImageAnalysisClient } = require("@azure-rest/ai-vision-image-analysis");
-const createClient = require("@azure-rest/ai-vision-image-analysis").default;
-const { AzureKeyCredential } = require("@azure/core-auth");
-const axios = require("axios");
-const FormData = require("form-data");
-const OpenAI = require("openai");
+const { azureOpenai } = require("../Libraries/azureOpenai");
+const { processImages } = require("./azureOcr");
 
-require("dotenv").config();
-
-const endpoint = process.env.OCR_ENDPOINT;
-const key = process.env.OCR_SUBSCRIPTION_KEY;
-const openaiApiKey = process.env.OPENAI_API_KEY;
-const blobStorageConnection = process.env.BLOB_STORAGE_CONNECTION;
-
-const openai = new OpenAI({
-  apiKey: openaiApiKey
-});
-
-const credential = new AzureKeyCredential(key);
-const client = createClient(endpoint, credential);
-
-const features = ["Read"];
-
-// Function to upload image to blob storage
-async function uploadToBlob(imageBuffer, filename) {
-  const { BlobServiceClient } = require("@azure/storage-blob");
-  const blobServiceClient = BlobServiceClient.fromConnectionString(blobStorageConnection);
-  const containerClient = blobServiceClient.getContainerClient("resource-images");
-  
-  const blobName = `${Date.now()}-${filename}`;
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  
-  await blockBlobClient.upload(imageBuffer, imageBuffer.length);
-  return blockBlobClient.url;
-}
-
-// Function to detect and process images within the content
-async function processContentImages(imageBuffer) {
+async function performOCR(pageImages, currentPage, ebook) {
   try {
-    // Use Azure Computer Vision to detect images within the content
-    const visionResult = await client.path("/imageanalysis:analyze").post({
-      body: imageBuffer,
-      queryParameters: {
-        features: ["Objects", "Tags"],
-      },
-      contentType: "application/octet-stream",
-    });
+    // Extract text from current page and next 2 pages
+    const extractedTexts = processImages(pageImages, currentPage);
 
-    const detectedObjects = visionResult.body.objects || [];
-    const images = [];
+    // Process combined text with GPT-4o mini
+    const previousContentTitles = ebook.contentTitles;
 
-    // Process each detected image region
-    for (const obj of detectedObjects) {
-      if (obj.confidence > 0.7) {  // Only process high-confidence detections
-        const { x, y, w, h } = obj.rectangle;
-        
-        // Crop the image buffer to the detected region
-        // Note: You'll need to implement actual image cropping logic here
-        const croppedBuffer = await cropImage(imageBuffer, x, y, w, h);
-        
-        // Upload cropped image to blob storage
-        const imageUrl = await uploadToBlob(croppedBuffer, `image-${Date.now()}`);
-        
-        images.push({
-          url: imageUrl,
-          position: { x, y, w, h },
-          tag: obj.tags?.[0] || "image"
-        });
-      }
+    const query = `    
+    Here are the Ocr Results for the current page and the next 2 pages:
+    1. ${extractedTexts[0]}(pagenumber: ${currentPage})
+    2. ${extractedTexts[1]}(pagenumber: ${currentPage + 1})
+    3. ${extractedTexts[2]}(pagenumber: ${currentPage + 2})
+
+    Here are the previous content titles for context:
+    ${previousContentTitles}
+
+    Please extract the text and structure it in the following format:
+    {
+      text: "extracted text",
+      contentTitles: [
+        { title: "title1", type: "head", page: ${currentPage} },
+        { title: "title2", type: "sub", page: ${currentPage} },
+        ...
+      ]
     }
 
-    return images;
-  } catch (error) {
-    console.error("Error processing content images:", error);
-    throw error;
-  }
-}
+    the text is the structured text extracted from the images and the contentTitles are the titles extracted from the text
+    head is the main title and sub is the subtitle while page is the page number of the page the title was extracted from
+    `;
 
-async function generateRichText(ocrResult, images) {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert in converting OCR text and images into well-structured rich text. 
-          Follow these rules:
-          1. Maintain the exact structure and hierarchy of the original material
-          2. Use proper HTML5 semantic elements and unique IDs for chapters and sections
-          3. Preserve the exact position of images, diagrams, and tables
-          4. Convert diagrams and tables to responsive HTML/CSS
-          5. Add appropriate styling and emphasis
-          6. Ensure sections are properly nested under their respective chapters
-          7. Group contextually related content within the same section`
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Convert this OCR result into rich text while maintaining structure and formatting:"
-            },
-            {
-              type: "text",
-              text: JSON.stringify(ocrResult)
-            },
-            {
-              type: "text",
-              text: "These images were detected and should be inserted at their original positions:"
-            },
-            {
-              type: "text",
-              text: JSON.stringify(images)
-            }
-          ]
-        }
-      ],
-      max_tokens: 4096
-    });
+    const systemInstruction = `
+    You are an advanced optical character processor. You will receive images of pages from a book. Your task is to review the OCR output and provide structured data.
+    `;
 
-    return completion.choices[0].message.content;
-  } catch (error) {
-    console.error("Error generating rich text:", error);
-    throw error;
-  }
-}
+    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt4o-mini', images = pageImages.slice(currentPage, currentPage + 3));
+    // Structure the output
+    const { text, contentTitles } = gptResponse;
 
-const performOCR = async (imageBuffer, res) => {
-  try {
-    // 1. Run native OCR with Azure
-    const result = await client.path("/imageanalysis:analyze").post({
-      body: imageBuffer,
-      queryParameters: {
-        features: features,
-      },
-      contentType: "application/octet-stream",
-    });
+    // Add text to ebook content array
+    ebook.content.push(text);
 
-    const ocrResult = result.body;
-
-    // 2. Process and extract images from the content
-    const contentImages = await processContentImages(imageBuffer);
-
-    // 3. Generate rich text with GPT-4V
-    const richText = await generateRichText(ocrResult, contentImages);
-
-    // 4. Post-process the rich text to ensure proper structure
-    const processedRichText = postProcessRichText(richText);
-
-    return {
-      richText: processedRichText,
-      images: contentImages
-    };
-
-  } catch (error) {
-    console.error("Error in OCR processing:", error);
-    if (res) {
-      res.status(500).json({
-        error: error.message
+    // Add content titles to ebook contentTitles array
+    contentTitles.forEach(title => {
+      ebook.contentTitles.push({
+        title: title.title,
+        type: title.type,
+        page: title.page + currentPage
       });
-    }
-    throw error;
+    });
+
+    return { message: 'OCR and processing successful', ebook };
+  } catch (error) {
+    throw new Error('Error processing PDF pages', error);
   }
-};
-
-// Helper function to post-process and validate rich text structure
-function postProcessRichText(richText) {
-  // Add any necessary post-processing logic here
-  // For example:
-  // - Validate HTML structure
-  // - Ensure all sections have proper IDs
-  // - Check image placements
-  // - Validate responsive tables and diagrams
-  return richText;
-}
-
-// Helper function to crop image buffer (implement based on your image processing library)
-async function cropImage(imageBuffer, x, y, w, h) {
-  // Implement image cropping logic here
-  // You might want to use libraries like Sharp or Jimp
-  return imageBuffer; // Placeholder return
 }
 
 module.exports = { performOCR };

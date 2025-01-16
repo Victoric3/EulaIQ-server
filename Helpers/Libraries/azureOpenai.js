@@ -4,27 +4,43 @@ const { textToSpeech } = require("./tts");
 const { generateSSML } = require("./ssmlTemplate");
 const { extractAndParseJSON } = require("../input/escapeStrinedJson");
 
-const azureOpenai = async (query, systemInstruction, deployment) => {
+const azureOpenai = async (query, systemInstruction, deployment, images = []) => {
   try {
-    console.log("started querying azure");
+    console.log("Started querying Azure");
+
     const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
     const apiKey = process.env.AZURE_OPENAI_APIKEY;
-    console.log("endpoint: ", endpoint);
+    console.log("Endpoint: ", endpoint);
 
     const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
 
-    const result = await client.getChatCompletions(deployment, [
+    // Prepare the messages array
+    const messages = [
       {
         role: "system",
         content: systemInstruction,
       },
       { role: "user", content: JSON.stringify(query) },
-    ]);
+    ];
+
+    // Add images to the messages array
+    images.forEach((image) => {
+      messages.push({
+        role: "user",
+        content: JSON.stringify({ image: image }),
+      });
+    });
+
+    // Send the request
+    const result = await client.getChatCompletions(deployment, messages);
+
+    // Return the combined response
     return result.choices.map((choice) => choice.message.content).join("");
   } catch (err) {
     console.error("The sample encountered an error:", err);
   }
 };
+
 
 const chunkText = (text) => {
   if (text) {

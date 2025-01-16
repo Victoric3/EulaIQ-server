@@ -29,7 +29,6 @@ const getAccessTokenFromCookies = (req) => {
 
 const sendToken = (user, statusCode, res, message) => {
   const token = user.generateJwtFromUser();
-  const decoded = jwt.decode(token);
   // Set cookie options
   const cookieOptions = {
     expires: new Date(

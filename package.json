@@ -4,7 +4,13 @@
   "description": "",
   "main": "server.js",
   "engines": {
-    "node": "20.11.1"
+    "node": "20.18.1"
+  },
+  "overrides": {
+    "got": ">=12.0.0"
+  },
+  "config": {
+    "engine-strict": false
   },
   "scripts": {
     "start": "node server.js",
@@ -24,7 +30,7 @@
     "axios": "^1.6.5",
     "bcryptjs": "^2.4.3",
     "bull": "^4.13.0",
-    "canvas": "^2.11.2",
+    "canvas": "^3.0.1",
     "concurrently": "^8.2.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -41,6 +47,7 @@
     "geolib": "^3.3.4",
     "google-auth-library": "^9.2.0",
     "googleapis": "^128.0.0",
+    "got": "^14.4.5",
     "html-to-text": "^9.0.5",
     "htmlparser2": "^9.1.0",
     "ioredis": "^5.4.1",
@@ -61,7 +68,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pdf2pic": "^3.1.1",
-    "pdfjs-dist": "^4.3.136",
+    "pdfjs-dist": "^4.10.38",
     "pdfkit": "^0.15.0",
     "pm2": "^5.3.0",
     "pptx2json": "^0.0.8",
@@ -75,7 +82,6 @@
     "socket.io": "^4.7.5",
     "start": "^5.1.0",
     "stream": "^0.0.2",
-    "tesseract.js": "^5.1.0",
     "textract": "^2.5.0",
     "uuid": "^8.0.0",
     "xlsx": "^0.17.0"

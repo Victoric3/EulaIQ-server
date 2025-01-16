@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
       interests: {
         type: [String],
         default: [
-          "Romance",
+          "SystemChoice",
         ],
       },
       isAnonymous: {

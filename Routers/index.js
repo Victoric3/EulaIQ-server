@@ -15,7 +15,7 @@ const youtubeDataAnal = require("./youtubeDataAnal");
 const audio = require("./audio");
 
 router.use("/auth", authRoute);
-router.use("/story", storyRoute);
+router.use("/ebook", storyRoute);
 router.use("/user", userRoute);
 router.use("/comment", commentRoute);
 router.use("/question", questionRoute);

@@ -152,18 +152,23 @@ const login = async (req, res) => {
       isAnonymous,
       anonymousId,
     } = req.body;
+    if (!identity || !password) {
+      return res.status(400).json({
+        status: "failed",
+        errorMessage: "invalid email or password",
+      });
+    }
     // console.log(location, ipAddress, deviceInfo);
     const [anonymousUser, user] = await Promise.all([
       anonymousId
         ? User.findOne({ anonymousId, isAnonymous: true }).select(
-            "+password firstname email"
-          )
+          "+password firstname email"
+        )
         : null,
       User.findOne({ email: identity }).select(
         "+password emailStatus temporary location ipAddress deviceInfo role email firstname username tokenVersion"
       ),
     ]);
-    console.log("anonymousUser: ", anonymousUser, "user: ", user);
 
     // Early validation checks
     if (isAnonymous && !user) {
@@ -189,17 +194,10 @@ const login = async (req, res) => {
       });
     }
 
-    if (!identity || !password) {
-      return res.status(400).json({
-        status: "failed",
-        errorMessage: "invalid email or password",
-      });
-    }
 
     // Handle non-existent user case
     if (!user) {
       const anonymousId = generateAnonymousId();
-      console.log("trying to create new user");
       // Create new user asynchronously
       const newUserPromise = await User.create({
         firstname: "firstname",
@@ -300,7 +298,7 @@ const login = async (req, res) => {
     console.error("Login error:", error);
     return res.status(500).json({
       status: "failed",
-      errorMessage: "Internal server error",
+      errorMessage: error.message || "Internal server error",
     });
   }
 };
@@ -335,10 +333,8 @@ const changeUserName = async (req, res) => {
     });
   }
 };
-
-const forgotpassword = asyncErrorWrapper(async (req, res, next) => {
-  const { URL } = process.env;
-
+//TODO: correct security breech caused by alloowing sign in without password
+const forgotpassword = async (req, res) => {
   const resetEmail = req.body.email;
   try {
     const user = await User.findOne({ email: resetEmail });
@@ -349,8 +345,14 @@ const forgotpassword = asyncErrorWrapper(async (req, res, next) => {
       });
     }
 
-    const resetPasswordToken = user.createToken();
-
+    let resetPasswordToken;
+    console.log("user: ", user);
+    try {
+      resetPasswordToken = await user.createToken();
+      console.log("resetPasswordToken: ", resetPasswordToken);
+    } catch (err) {
+      console.log(err);
+    }
     await user.save();
 
     await new Email(user, resetPasswordToken).sendPasswordReset();
@@ -365,7 +367,7 @@ const forgotpassword = asyncErrorWrapper(async (req, res, next) => {
       errorMessage: `internal server error`,
     });
   }
-});
+};
 
 const resetpassword = async (req, res) => {
   const { resetPasswordToken, newPassword } = req.body;
@@ -457,30 +459,38 @@ const confirmEmailAndSignUp = catchAsync(async (req, res, next) => {
   }
 });
 
-const unUsualSignIn = catchAsync(async (req, res, next) => {
+const unUsualSignIn = async (req, res, next) => {
   const { token, location, deviceInfo, ipAddress } = req.body;
-  //1  get user based on token
-  const hashedToken = crypto.createHash("shake256").update(token).digest("hex");
-  const user = await User.findOne({
-    verificationToken: hashedToken,
-    verificationTokenExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    res.status(400).json({
-      status: "failed",
-      errorMessage: `this token is invalid or has expired`,
+  try {
+    //1  get user based on token
+    const hashedToken = crypto.createHash("shake256").update(token).digest("hex");
+    const user = await User.findOne({
+      verificationToken: hashedToken,
+      verificationTokenExpires: { $gt: Date.now() },
     });
+
+    if (!user) {
+      res.status(400).json({
+        status: "failed",
+        errorMessage: `this token is invalid or has expired`,
+      });
+      return;
+    }
+    //2 set verify user status to confirmed
+    addUserInfo(user, { location, deviceInfo, ipAddress });
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+    sendToken(user, 200, res, "verification successful");
     return;
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      status: "failed",
+      message: err.message || "internal server error",
+    });
   }
-  //2 set verify user status to confirmed
-  addUserInfo(user, { location, deviceInfo, ipAddress });
-  user.verificationToken = undefined;
-  user.verificationTokenExpires = undefined;
-  await user.save();
-  sendToken(user, 200, res, "verification successful");
-  return;
-});
+};
 
 //TODO: correct security breech caused by alloowing sign in without password
 const resendVerificationToken = catchAsync(async (req, res, next) => {

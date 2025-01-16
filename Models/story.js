@@ -16,21 +16,27 @@ const StorySchema = new mongoose.Schema(
       unique: true,
       minlength: [4, "Please provide a title of at least 4 characters"],
     },
+    description: {
+      type: String,
+      required: [true, "Please provide a description"],
+      minlength: [50, "Please provide a description of at least 50 characters"],
+    },
     content: {
       type: [String],
       required: [true, "Please provide content"],
-      validator: (value) => {
-        const shortContent = value.filter(item => item.length < 500);
-        if (shortContent.length > 0) {
-          console.error(`Content must be at least 1500 characters. Short items:`, shortContent);
-          return false;
-        }
-        return true;
-      }
+      default: [],
     },
     contentTitles: {
-      type: [String],
+      type: [{
+        title: String,
+        type: String,
+        page: Number
+      }],
       default: []
+    },
+    fileUrl: {
+      type: String,
+      default: "none",
     },
     contentCount: {
       type: Number,
@@ -38,28 +44,29 @@ const StorySchema = new mongoose.Schema(
     },
     tags: {
       type: [String],
-      default: ["Multi-genre"],
-      enum: [
-        "Romance",
-        "shortStory",
-        "sci-Fi",
-        "Fantasy",
-        "Horror",
-        "Mystery",
-        "Non-Fiction",
-        "Historical Fiction",
-        "Multi-genre",
-        "Adventure",
-        "Biography",
-        "Science",
-        "Self-Help",
-        "Personal-development",
-      ],
+      default: ["general"],
     },
-    summary: {
-      type: String,
-      required: true,
-    },
+    summaries: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "Summary",
+        required: true,
+      },
+    ],
+    audioCollections: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "AudioCollection",
+        required: true,
+      },
+    ],
+    questions: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "Question",
+        required: true,
+      },
+    ],
     image: {
       type: String,
       default: "default.jpg",
