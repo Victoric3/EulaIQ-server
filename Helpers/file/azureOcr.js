@@ -15,11 +15,14 @@ function extractTextFromOcrResult(ocrResult) {
   }
 
 async function azureOcr(imageBuffer) {
-  const endpoint = process.env.OCR_ENDPOINT; // e.g., 'https://<your-resource-name>.cognitiveservices.azure.com/'
-  const subscriptionKey = process.env.OCR_SUBSCRIPTION_KEY;
+  const endpoint = process.env.OCR_ENDPOINT_2;
+  const subscriptionKey = process.env.OCR_SUBSCRIPTION_KEY_2;
+  console.log("endpoint: ", endpoint);
+  console.log("subscriptionKey: ", subscriptionKey);
 
   // Save buffer to a temporary file
   const tempFilePath = await saveBufferToFile(imageBuffer, 'tempImage.jpg');
+  console.log("tempFilePath: ", tempFilePath);
 
   try {
     const imageData = await fs.readFile(tempFilePath);
@@ -47,6 +50,7 @@ async function azureOcr(imageBuffer) {
       });
 
       result = resultResponse.data;
+      console.log("result: ", result);
 
       if (result.status === 'succeeded') {
         break;
@@ -71,7 +75,7 @@ async function azureOcr(imageBuffer) {
   
   async function processImages(pageImages, currentPage) {
     const ocrPromises = pageImages
-      .slice(currentPage, currentPage + 3)
+      .slice(currentPage, currentPage + 2)
       .map((image) => advanceOcr(image));
   
     const ocrResults = await Promise.all(ocrPromises);

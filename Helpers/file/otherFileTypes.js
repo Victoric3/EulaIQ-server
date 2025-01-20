@@ -1,6 +1,6 @@
 const htmlparser2 = require("htmlparser2");
 const Papa = require("papaparse");
-const textract = require("textract");
+// const textract = require("textract");
 const libre = require("libreoffice-convert");
 const fs = require("fs-extra");
 const { extractPdfContent } = require("./extractPdf");
@@ -151,55 +151,55 @@ async function convertPptxToPdfBuffer(inputPath) {
 
 const extractPptxContent = async (file, imageNumbers) => {
   // Generate a temporary file path
-  const tempFilePath = `./output_${file.originalname}`;
+  // const tempFilePath = `./output_${file.originalname}`;
 
-  try {
-    // Write the buffer to a temporary file
-    fs.writeFileSync(tempFilePath, file.buffer);
-    let textContents = [];
+  // try {
+  //   // Write the buffer to a temporary file
+  //   fs.writeFileSync(tempFilePath, file.buffer);
+  //   let textContents = [];
 
-    // Process the extracted text
-    if (imageNumbers.length > 0) {
-      const pdfBuffer = await convertPptxToPdfBuffer(tempFilePath);
-      const text = await extractPdfContent(pdfBuffer);
-      return (textContents = [...text]);
-    } else {
-      const text = await new Promise((resolve, reject) => {
-        textract.fromFileWithPath(tempFilePath, (error, text) => {
-          if (error) {
-            return reject(error);
-          }
-          resolve(text);
-        });
-      });
-      const lines = text.split(".").map(line => line.trim());
-      const linesPerChunk = 15;
+  //   // Process the extracted text
+  //   if (imageNumbers.length > 0) {
+  //     const pdfBuffer = await convertPptxToPdfBuffer(tempFilePath);
+  //     const text = await extractPdfContent(pdfBuffer);
+  //     return (textContents = [...text]);
+  //   } else {
+  //     const text = await new Promise((resolve, reject) => {
+  //       textract.fromFileWithPath(tempFilePath, (error, text) => {
+  //         if (error) {
+  //           return reject(error);
+  //         }
+  //         resolve(text);
+  //       });
+  //     });
+  //     const lines = text.split(".").map(line => line.trim());
+  //     const linesPerChunk = 15;
 
-      for (let i = 0; i < lines.length; i += linesPerChunk) {
-        const chunkLines = lines.slice(i, i + linesPerChunk);
-        const concatenatedText = chunkLines.join(". ");
+  //     for (let i = 0; i < lines.length; i += linesPerChunk) {
+  //       const chunkLines = lines.slice(i, i + linesPerChunk);
+  //       const concatenatedText = chunkLines.join(". ");
 
-        textContents.push({
-          text: concatenatedText,
-          position: {
-            pageIndex: Math.floor(i / linesPerChunk),
-            lineIndex: i % linesPerChunk,
-          },
-        });
-      }
-    }
+  //       textContents.push({
+  //         text: concatenatedText,
+  //         position: {
+  //           pageIndex: Math.floor(i / linesPerChunk),
+  //           lineIndex: i % linesPerChunk,
+  //         },
+  //       });
+  //     }
+  //   }
     
-    // Delete the temporary file
-    fs.unlinkSync(tempFilePath);
-    return textContents;
-  } catch (error) {
-    // Ensure the temporary file is deleted even if an error occurs
-    if (fs.existsSync(tempFilePath)) {
-      fs.unlinkSync(tempFilePath);
-    }
-    console.error("Error extracting PPTX content:", error);
-    throw error;
-  }
+  //   // Delete the temporary file
+  //   fs.unlinkSync(tempFilePath);
+  //   return textContents;
+  // } catch (error) {
+  //   // Ensure the temporary file is deleted even if an error occurs
+  //   if (fs.existsSync(tempFilePath)) {
+  //     fs.unlinkSync(tempFilePath);
+  //   }
+  //   console.error("Error extracting PPTX content:", error);
+  //   throw error;
+  // }
 };
 
 module.exports = {

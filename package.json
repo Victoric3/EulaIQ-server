@@ -47,7 +47,6 @@
     "geolib": "^3.3.4",
     "google-auth-library": "^9.2.0",
     "googleapis": "^128.0.0",
-    "got": "^14.4.5",
     "html-to-text": "^9.0.5",
     "htmlparser2": "^9.1.0",
     "ioredis": "^5.4.1",
@@ -82,7 +81,6 @@
     "socket.io": "^4.7.5",
     "start": "^5.1.0",
     "stream": "^0.0.2",
-    "textract": "^2.5.0",
     "uuid": "^8.0.0",
     "xlsx": "^0.17.0"
   },

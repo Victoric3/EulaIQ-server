@@ -34,7 +34,7 @@ const handleTextExtraction = async (file, ebookId = null, currentPage = 0, ebook
     // Extract text from file
     switch (fileExtension) {
       case ".pdf":
-        response = await extractPdfContent(file, ebook, currentPage);
+        response = await extractPdfContent(file.buffer, ebook, currentPage);
         break;
       case ".docx":
         response = await extractDocxContent(file, ebook, currentPage);
@@ -110,12 +110,12 @@ const handlegenerateEbook = async (req, res) => {
     const ebook = await getEbookById(ebookId);
     let response;
     Promise.all([
-      response = await handleTextExtraction(file, ebookId, res, 0, ebook),
+      response = await handleTextExtraction(file, ebookId, 0, ebook),
       await saveFileAndAddLinkToEbook(file, ebook),
     ]);
     console.log("response", response);
     if(response.status === "success"){
-      res.status(200).json({message: "Ebook generated successfully", ebookId});
+      res.status(200).json({message: response.message || "Ebook generated successfully", ebookId});
     }
   }catch(error){
     console.error("Error generating ebook:", error);

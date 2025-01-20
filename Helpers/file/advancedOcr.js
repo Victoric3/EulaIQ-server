@@ -3,8 +3,14 @@ const { processImages } = require("./azureOcr");
 
 async function performOCR(pageImages, currentPage, ebook) {
   try {
+    console.log("started performing ocr.....");
+    // return { message: 'OCR and processing successful', ebook };
     // Extract text from current page and next 2 pages
-    const extractedTexts = processImages(pageImages, currentPage);
+    console.log("pageImages: ", pageImages)
+    const extractedTexts = await processImages(pageImages, currentPage);
+
+    console.log("extractedTexts: ", extractedTexts);
+    console.log("extractedTexts[0]: ", extractedTexts[0]);
 
     // Process combined text with GPT-4o mini
     const previousContentTitles = ebook.contentTitles;
@@ -20,7 +26,7 @@ async function performOCR(pageImages, currentPage, ebook) {
 
     Please extract the text and structure it in the following format:
     {
-      text: "extracted text",
+      text: "extracted text | a rich text(html)",
       contentTitles: [
         { title: "title1", type: "head", page: ${currentPage} },
         { title: "title2", type: "sub", page: ${currentPage} },
@@ -36,9 +42,11 @@ async function performOCR(pageImages, currentPage, ebook) {
     You are an advanced optical character processor. You will receive images of pages from a book. Your task is to review the OCR output and provide structured data.
     `;
 
-    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt4o-mini', images = pageImages.slice(currentPage, currentPage + 3));
+    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt-4o', images = pageImages.slice(currentPage, currentPage + 3));
     // Structure the output
     const { text, contentTitles } = gptResponse;
+
+    console.log("gptResponse: ", gptResponse);
 
     // Add text to ebook content array
     ebook.content.push(text);
