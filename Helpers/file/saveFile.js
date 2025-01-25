@@ -1,5 +1,7 @@
 const { BlobServiceClient } = require('@azure/storage-blob');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs-extra');
+const path = require("path");
 
 const saveFileAndAddLinkToEbook = async (file, ebook) => {
   try {
@@ -50,4 +52,51 @@ const saveFileAndAddLinkToEbook = async (file, ebook) => {
   }
 };
 
-module.exports = { saveFileAndAddLinkToEbook };
+const uploadImagesToAzure = async (tempFilePaths) => {
+  try {
+    // Get connection string from environment variables
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const containerImageName = process.env.CONTAINER_IMAGE_NAME;
+
+    if (!connectionString || !containerImageName) {
+      throw new Error('Azure Storage credentials not configured properly');
+    }
+
+    // Create BlobServiceClient using the connection string
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+
+    // Get container client for images
+    const containerClient = blobServiceClient.getContainerClient(containerImageName);
+
+    // Create container if it doesn't exist
+    await containerClient.createIfNotExists({
+      access: 'blob'
+    });
+
+    // Upload image files
+    const imageUrls = [];
+    for (const tempFilePath of tempFilePaths) {
+      const imageBuffer = fs.readFileSync(tempFilePath);
+      const blobImageName = `${uuidv4()}-${path.basename(tempFilePath)}`;
+      const blockBlobClient = containerClient.getBlockBlobClient(blobImageName);
+
+      const uploadOptions = {
+        blobHTTPHeaders: {
+          blobContentType: 'image/png'
+        }
+      };
+      await blockBlobClient.uploadData(imageBuffer, uploadOptions);
+
+      // Get blob URL for the image
+      const blobImageUrl = blockBlobClient.url;
+      imageUrls.push(blobImageUrl);
+    }
+
+    return { status: "success", imageUrls, message: "successfully uploaded images" };
+  } catch (error) {
+    console.error('Error uploading images to Azure:', error);
+    throw new Error(`Failed to upload images: ${error.message}`);
+  }
+};
+
+module.exports = { saveFileAndAddLinkToEbook, uploadImagesToAzure };

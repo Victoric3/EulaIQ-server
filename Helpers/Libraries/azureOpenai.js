@@ -1,45 +1,62 @@
-const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
 const { queryCreator } = require("../../data/audioModules");
 const { textToSpeech } = require("./tts");
 const { generateSSML } = require("./ssmlTemplate");
 const { extractAndParseJSON } = require("../input/escapeStrinedJson");
+const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
 
 const azureOpenai = async (query, systemInstruction, deployment, images = []) => {
+  console.log("called azureOpenai", query, systemInstruction, deployment, images);
   try {
-    console.log("Started querying Azure");
-
     const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
     const apiKey = process.env.AZURE_OPENAI_APIKEY;
-    console.log("Endpoint: ", endpoint);
 
+    // Initialize client
     const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
-
-    // Prepare the messages array
+    
+    // Prepare messages
     const messages = [
+      { role: "system", content: systemInstruction },
       {
-        role: "system",
-        content: systemInstruction,
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: query
+          },
+          {
+            type: "image_url",
+            image_url: { url: images[0] },
+          },
+        ],
       },
-      { role: "user", content: JSON.stringify(query) },
     ];
 
-    // Add images to the messages array
-    images.forEach((image) => {
-      messages.push({
-        role: "user",
-        content: JSON.stringify({ image: image }),
-      });
+    // Add image URLs if provided
+    // if (images.length > 0) {
+    //   const imageMessages = images.map((imageUrl) => ({
+    //     type: "image_url",
+    //     image_url: { url: imageUrl },
+    //   }));
+    //   messages[1].content.push(...imageMessages);
+    // }
+
+    // console.log("messages: ", messages[1].content[0]);
+    // console.log("messages: ", messages[1].content[1]);
+    // console.log("messages: ", messages[1].content[2]);
+    // console.log("messages: ", messages[1].content[3]);
+
+    // Get completions
+    const response = await client.getChatCompletions(deployment, messages, {
+      maxTokens: 4000,
     });
 
-    // Send the request
-    const result = await client.getChatCompletions(deployment, messages);
-
-    // Return the combined response
-    return result.choices.map((choice) => choice.message.content).join("");
+    return response.choices[0]?.message?.content || "";
   } catch (err) {
-    console.error("The sample encountered an error:", err);
+    console.error("Azure OpenAI Error:", err);
+    throw err;
   }
 };
+
 
 
 const chunkText = (text) => {

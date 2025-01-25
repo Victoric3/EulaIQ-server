@@ -1,25 +1,22 @@
 const { azureOpenai } = require("../Libraries/azureOpenai");
 const { processImages } = require("./azureOcr");
+const { uploadImagesToAzure } = require("./saveFile");
 
-async function performOCR(pageImages, currentPage, ebook) {
+async function performOCR(currentPage, ebook, tempFilePaths) {
   try {
     console.log("started performing ocr.....");
-    // return { message: 'OCR and processing successful', ebook };
-    // Extract text from current page and next 2 pages
-    console.log("pageImages: ", pageImages)
-    const extractedTexts = await processImages(pageImages, currentPage);
 
-    console.log("extractedTexts: ", extractedTexts);
-    console.log("extractedTexts[0]: ", extractedTexts[0]);
+    // Extract text from current page and next 2 pages
+    const extractedTexts = await processImages(tempFilePaths);
 
     // Process combined text with GPT-4o mini
     const previousContentTitles = ebook.contentTitles;
 
     const query = `    
     Here are the Ocr Results for the current page and the next 2 pages:
-    1. ${extractedTexts[0]}(pagenumber: ${currentPage})
-    2. ${extractedTexts[1]}(pagenumber: ${currentPage + 1})
-    3. ${extractedTexts[2]}(pagenumber: ${currentPage + 2})
+    1. ${extractedTexts[0].extractedTexts}(pagenumber: ${currentPage})
+    2. ${extractedTexts[1].extractedTexts}(pagenumber: ${currentPage + 1})
+    3. ${extractedTexts[2].extractedTexts}(pagenumber: ${currentPage + 2})
 
     Here are the previous content titles for context:
     ${previousContentTitles}
@@ -42,7 +39,8 @@ async function performOCR(pageImages, currentPage, ebook) {
     You are an advanced optical character processor. You will receive images of pages from a book. Your task is to review the OCR output and provide structured data.
     `;
 
-    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt-4o', images = pageImages.slice(currentPage, currentPage + 3));
+    const { imageUrls } = await uploadImagesToAzure(tempFilePaths);
+    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt-4o', images = imageUrls);
     // Structure the output
     const { text, contentTitles } = gptResponse;
 
@@ -60,7 +58,7 @@ async function performOCR(pageImages, currentPage, ebook) {
       });
     });
 
-    return { message: 'OCR and processing successful', ebook };
+    return { status: "success", message: 'OCR and processing successful', ebook };
   } catch (error) {
     throw new Error('Error processing PDF pages', error);
   }

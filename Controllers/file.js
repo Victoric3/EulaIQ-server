@@ -10,24 +10,12 @@ const {
 const { saveFileAndAddLinkToEbook } = require("../Helpers/file/saveFile");
 const { createEbook, getEbookById } = require("./ebook");
 const path = require("path");
-const { retry } = require("../Helpers/file/retryFunc");
+// const { retry } = require("../Helpers/file/retryFunc");
 // const { remove } = require("../Models/comment");
 
-const handleTextExtraction = async (file, ebookId = null, currentPage = 0, ebook = null) => {
+const handleTextExtraction = async (file, currentPage = 0, ebook) => {
   try {
     const fileExtension = path.extname(file.originalname).toLowerCase();
-
-    // If ebookId is null, create ebook using story model, and set ebookId to the id of the created ebook
-    if (!ebookId) {
-      // Assuming createEbook is a function that creates an ebook and returns its id
-      ebookId = await createEbook(file);
-    }
-
-    // If ebook is null, get ebook, save file and add link to ebook
-    if (!ebook) {
-      ebook = await getEbookById(ebookId);
-      await saveFileAndAddLinkToEbook(file, ebook);
-    }
 
     let response;
 
@@ -58,10 +46,6 @@ const handleTextExtraction = async (file, ebookId = null, currentPage = 0, ebook
         throw new Error(`Unsupported file type: ${file.mimetype}`);
     }
 
-    if (!ebookId) {
-      throw new Error(`Failed to extract content from file: ${file.originalname}`);
-    }
-
     return response;
   } catch (error) {
     console.error(`Error handling text extraction for file ${file.originalname}:`, error);
@@ -69,51 +53,27 @@ const handleTextExtraction = async (file, ebookId = null, currentPage = 0, ebook
   }
 };
 
-// const handleTextProcessing = async (file, ebookId = null) => {
-
-//   // -----------------currently for ReferenceError will be removed later----------------
-//   //confirm pdf file name with out extension is the same as the ebook name, if not or if there's no pdf fetch the pdf from azure blob
-//   // if (ebook && ebook.fileUrl !== pdfFile.name.split(".")[0]) {
-//     //   pdfFile = await fetchFileFromBlob(ebook.fileUrl);
-//     // }
-//     // -----------------currently for ReferenceError will be removed later----------------
-
-//     try {
-//     console.log("Started extracting file text");
-
-//     if (file) {
-//       ebookId = await retry(() => handleTextExtraction(file, ebookId), 3, res);
-//     }
-
-//     return {
-//       ebookId,
-//     };
-//   } catch (error) {
-//     console.error("Error during text processing:", error);
-
-//     if (res && res.io) {
-//       res.io.emit("text-processing-error", {
-//         message: "Error during text processing",
-//         error: error.message,
-//       });
-//     }
-
-//     throw error;
-//   }
-// };
-
 const handlegenerateEbook = async (req, res) => {
   try {
+    let response;
     const file = req.file;
     const ebookId = await createEbook(req, file);
-    console.log("ebookId", ebookId);
     const ebook = await getEbookById(ebookId);
-    let response;
+
+    const clonedFileBuffer = Buffer.from(file.buffer);
+    const clonedFileForSaveBuffer = Buffer.from(file.buffer);
+
+    const clonedFile = { ...file, buffer: clonedFileBuffer };
+    const clonedFileForSave = { ...file, buffer: clonedFileForSaveBuffer };
+
     Promise.all([
-      response = await handleTextExtraction(file, ebookId, 0, ebook),
-      await saveFileAndAddLinkToEbook(file, ebook),
+      // use Cloned file to avoid mutation of req.file
+      response = await handleTextExtraction(clonedFile, 0, ebook),
+      
+      // use Cloned file to avoid mutation of req.file
+      await saveFileAndAddLinkToEbook(clonedFileForSave, ebook),
     ]);
-    console.log("response", response);
+
     if(response.status === "success"){
       res.status(200).json({message: response.message || "Ebook generated successfully", ebookId});
     }
@@ -128,20 +88,3 @@ module.exports = {
   handleTextExtraction,
   handlegenerateEbook,
 };
-
-
-      //for refrence, incase i need to describe at some other point in the code
-      // const query = describe(firstTextChunk, module, moduleDescription, type);
-  
-      // const extractedDescription = await retry(
-      //   async () => {
-      //     const description = await azureOpenai(
-      //       query,
-      //       `you are an ${type} resource describer, return a text describing the ${type} collection to serve as an introduction to it, use very simple language`,
-      //       "gpt-4o"
-      //     );
-      //     return extractAndParseJSON(description);
-      //   },
-      //   3,
-      //   res
-      // );

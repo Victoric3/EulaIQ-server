@@ -1,6 +1,7 @@
 const axios = require('axios');
+const fs = require('fs-extra');
 
-function extractTextFromOcrResult(ocrResult) {
+function extractTextFromOcrResult(ocrResult, currentPage) {
     if (ocrResult.status !== 'succeeded') {
       throw new Error('OCR processing did not succeed.');
     }
@@ -11,18 +12,14 @@ function extractTextFromOcrResult(ocrResult) {
       )
       .join('\n\n');
   
-    return fullText;
+    return {page: currentPage, extractedTexts: fullText};
   }
 
-async function azureOcr(imageBuffer) {
-  const endpoint = process.env.OCR_ENDPOINT_2;
-  const subscriptionKey = process.env.OCR_SUBSCRIPTION_KEY_2;
+async function azureOcr(tempFilePath) {
+  const endpoint = process.env.OCR_ENDPOINT;
+  const subscriptionKey = process.env.OCR_SUBSCRIPTION_KEY;
   console.log("endpoint: ", endpoint);
   console.log("subscriptionKey: ", subscriptionKey);
-
-  // Save buffer to a temporary file
-  const tempFilePath = await saveBufferToFile(imageBuffer, 'tempImage.jpg');
-  console.log("tempFilePath: ", tempFilePath);
 
   try {
     const imageData = await fs.readFile(tempFilePath);
@@ -50,7 +47,6 @@ async function azureOcr(imageBuffer) {
       });
 
       result = resultResponse.data;
-      console.log("result: ", result);
 
       if (result.status === 'succeeded') {
         break;
@@ -66,25 +62,27 @@ async function azureOcr(imageBuffer) {
   } catch (error) {
     console.error('Error during OCR processing:', error);
     throw error;
-  } finally {
-    // Clean up the temporary file
-    await deleteFile(tempFilePath);
   }
 }
 
   
-  async function processImages(pageImages, currentPage) {
-    const ocrPromises = pageImages
-      .slice(currentPage, currentPage + 2)
-      .map((image) => advanceOcr(image));
-  
-    const ocrResults = await Promise.all(ocrPromises);
-  
-    const extractedTexts = ocrResults.map((result) =>
-      extractTextFromOcrResult(result)
+  async function processImages(tempFilePaths) {
+    try{
+
+      const ocrPromises = tempFilePaths.map((tempFilePath) => azureOcr(tempFilePath));
+      
+      const ocrResults = await Promise.all(ocrPromises);
+      
+      const extractedTexts = ocrResults.map((result, index) =>
+        extractTextFromOcrResult(result, index)
     );
-  
+    console.log("extractedTexts: ", extractedTexts);
+    
     return extractedTexts;
+  } catch (error) {
+    console.error('Error processing images:', error);
+    throw error;
+  };
   }
   
 module.exports = { azureOcr, extractTextFromOcrResult, processImages };
