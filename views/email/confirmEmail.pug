@@ -1,32 +1,14 @@
 extends baseEmail
 
 block content
-  // Logo and site name at the top
-  div(style="text-align: center; margin-bottom: 20px;")
-    img(src="https://i.ibb.co/NNbc0wp/logo-icon.png", alt= `${process.env.SITE_NAME} Logo`, style="height: 50px; border-radius: 50%; vertical-align: middle;")
-    span(style="font-family: sans-serif; font-size: 24px; font-weight: bold; vertical-align: middle; color: #333; margin-left: 10px;")
-      | #{process.env.SITE_NAME}
-
-  // Verification code section
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px; text-align: center;")
-    | Thank you for creating an account with #{process.env.SITE_NAME}!
-    br
-    | Please enter the following verification code:
-  
-  p(style="font-family: sans-serif; font-size: 25px; font-weight: bold; text-align: center; color: #333")
-    | #{url}
-
-  // Additional information
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | If you did not create an account on #{process.env.SITE_NAME}, please ignore this email.
-  
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | For security reasons, this confirmation code will expire in 20 minutes.
-  
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | Thank you for choosing #{process.env.SITE_NAME}! If you encounter any issues or need further assistance, please don't hesitate to contact us at
-  
-  // Contact email
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; text-align: center;")
-    a(href= `mailto:${process.env.EMAIL_ACCOUNT}`, style="color: #ff3811; text-decoration: none;")
-      | #{process.env.EMAIL_ACCOUNT}
+  div.content-wrapper
+    h2(style="color: var(--brand-deep-gold); margin-bottom: 24px;") Verify Your Email
+    
+    p Hello #{firstName},
+    
+    p Please verify your email address to access all of EulaIQ's features:
+    
+    div(style="text-align: center; margin: 32px 0;")
+      a.button(href=url) Verify Email Address
+    
+    p This verification link will expire in 20 Minutes. If you didn't create an account with EulaIQ, please ignore this email.

@@ -14,29 +14,15 @@ module.exports = class Email {
   }
 
   newTransport() {
-    // if (process.env.NODE_ENV === "development") {
-    //   return nodemailer.createTransport({
-    //     host: "sandbox.smtp.mailtrap.io",
-    //     port: 465,
-    //     secure: false,
-    //     auth: {
-    //       user: process.env.EMAIL_USERNAME_DEV,
-    //       pass: process.env.EMAIL_PASS_DEV,
-    //     },
-    //   });
-    // }
-    // if (process.env.NODE_ENV === "production") {
-      return nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.EMAIL_ACCOUNT,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-    // }
+    return nodemailer.createTransport({
+      host: "smtp.zeptomail.com",
+      port: 587,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_ACCOUNT,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
   }
   async send(template, subject, preheader = "") {
     // Render Pug template

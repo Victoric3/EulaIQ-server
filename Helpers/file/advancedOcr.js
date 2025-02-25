@@ -1,66 +1,145 @@
 const { azureOpenai } = require("../Libraries/azureOpenai");
 const { processImages } = require("./azureOcr");
-const { uploadImagesToAzure } = require("./saveFile");
+const { extractAndParseJSON } = require("../input/escapeStrinedJson");
 
-async function performOCR(currentPage, ebook, tempFilePaths) {
+async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
   try {
-    console.log("started performing ocr.....");
-
-    // Extract text from current page and next 2 pages
+    console.log("Starting parallel OCR processing...");
+    let startTime = Date.now();
     const extractedTexts = await processImages(tempFilePaths);
-
-    // Process combined text with GPT-4o mini
     const previousContentTitles = ebook.contentTitles;
 
-    const query = `    
-    Here are the Ocr Results for the current page and the next 2 pages:
-    1. ${extractedTexts[0].extractedTexts}(pagenumber: ${currentPage})
-    2. ${extractedTexts[1].extractedTexts}(pagenumber: ${currentPage + 1})
-    3. ${extractedTexts[2].extractedTexts}(pagenumber: ${currentPage + 2})
-
-    Here are the previous content titles for context:
-    ${previousContentTitles}
-
-    Please extract the text and structure it in the following format:
-    {
-      text: "extracted text | a rich text(html)",
-      contentTitles: [
-        { title: "title1", type: "head", page: ${currentPage} },
-        { title: "title2", type: "sub", page: ${currentPage} },
-        ...
-      ]
-    }
-
-    the text is the structured text extracted from the images and the contentTitles are the titles extracted from the text
-    head is the main title and sub is the subtitle while page is the page number of the page the title was extracted from
-    `;
-
-    const systemInstruction = `
-    You are an advanced optical character processor. You will receive images of pages from a book. Your task is to review the OCR output and provide structured data.
-    `;
-
-    const { imageUrls } = await uploadImagesToAzure(tempFilePaths);
-    const gptResponse = await azureOpenai(query, systemInstruction, 'gpt-4o', images = imageUrls);
-    // Structure the output
-    const { text, contentTitles } = gptResponse;
-
-    console.log("gptResponse: ", gptResponse);
-
-    // Add text to ebook content array
-    ebook.content.push(text);
-
-    // Add content titles to ebook contentTitles array
-    contentTitles.forEach(title => {
-      ebook.contentTitles.push({
-        title: title.title,
-        type: title.type,
-        page: title.page + currentPage
-      });
+    // Configure parallel processing
+    const pagePromises = Array.from({ length: extractedTexts.length}).map((_, i) => {
+      const pageNumber = currentPage + i + 1;
+      return processPage(
+        pageNumber,
+        extractedTexts[i].extractedTexts,
+        tempFilePaths[i],
+        previousContentTitles
+      );
     });
 
-    return { status: "success", message: 'OCR and processing successful', ebook };
+    // Execute all pages concurrently with timeout
+    const pageResults = await Promise.all(
+      pagePromises.map(p => 
+        Promise.race([
+          p,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Page processing timeout')), 120000)
+          )
+        ])
+      )
+    );
+
+    // Merge results
+    const merged = pageResults.reduce((acc, result) => ({
+      text: acc.text + result.text,
+      contentTitles: [...acc.contentTitles, ...result.contentTitles]
+    }), { text: "", contentTitles: [] });
+
+    // Deduplicate titles
+    const uniqueTitles = Array.from(new Map(
+      merged.contentTitles.map(t => [t.title + t.page, t])
+    ).values());
+
+    // Update ebook
+    ebook.content.push(merged.text);
+    ebook.contentTitles.push(...uniqueTitles);
+    ebook.contentCount = totalPages;
+
+    await ebook.save();
+
+    return { 
+      status: "success", 
+      message: `Pages processed successfully`,
+      metrics: {
+        characters: merged.text.length,
+        titlesAdded: uniqueTitles.length,
+        processingTime: Date.now() - startTime
+      }
+    };
+
   } catch (error) {
-    throw new Error('Error processing PDF pages', error);
+    console.error('Parallel processing failed:', error);
+    throw new Error(`OCR failed: ${error.message}`);
+  }
+}
+
+// Dedicated page processor
+async function processPage(pageNumber, extractedText, imagePath) {
+  const query = `  
+[OCR ENHANCEMENT - PAGE ${pageNumber}]
+**OCR Input (Raw/Uncorrected):**
+${extractedText}
+
+**Your Task:**
+1. CONTENT IMPROVEMENT:
+- Act as expert proofreader for OCR text
+- Fix ALL spelling mistakes (e.g. "Guld" → "GUID", "Allocaton" → "Allocation")
+- Add missing words ONLY when context clearly indicates omission 
+  (e.g. "BIOS is [...] basic operators" → "BIOS is [...] basic operations")
+- Correct misplaced line breaks while keeping paragraph structure
+- Maintain ALL technical terms and original content structure
+
+2. TITLE IDENTIFICATION:
+- Identify EXPLICIT headings/chapters/subtitles
+- Use verbatim text from CORRECTED content
+- Page numbers must match actual source
+
+**Required Output Format:**
+{
+  "text": "<p>Corrected HTML text with <br> tags</p>",
+  "contentTitles": [
+    {"title": "Exact Heading Text", "type": "head|sub|chapter", "page": ${pageNumber}}
+  ]
+}
+
+**Examples of Required Corrections:**
+1. OCR: "cooperture organization" → Corrected: "cooperative organization"
+2. OCR: "boot-up times are faster; windows 8 boots in 8 seconds" → Keep intact
+3. OCR: "Allocaton Unit Size" → Corrected: "Allocation Unit Size"
+
+**Strict Rules:**
+- DO NOT invent content not present in OCR
+- DO NOT change correct technical terms
+- DO NOT use markdown in JSON response
+- DO NOT add headings not explicitly shown
+- DO NOT guess page numbers for titles
+
+**Response MUST be valid JSON:**
+NO markdown code blocks, NO trailing commas
+`;
+
+  const systemInstruction = `
+  You are an OCR enhancement specialist with deep technical proofreading expertise. 
+  Balance these priorities:
+  1. Faithfully preserve original content structure
+  2. Correct ALL OCR errors using contextual understanding
+  3. Maintain technical accuracy above all
+  `;
+
+  try {
+    const response = await azureOpenai(
+      query,
+      systemInstruction,
+      'gpt-4o',
+      [imagePath]
+    );
+
+    const result = extractAndParseJSON(response);
+    
+    // Validate page number consistency
+    if (result.contentTitles.some(t => t.page !== pageNumber)) {
+      throw new Error('Page number mismatch in titles');
+
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error(`Page ${pageNumber} failed:`, error);
+    throw new Error(`Page ${pageNumber} processing failed: ${error.message}`);
   }
 }
 

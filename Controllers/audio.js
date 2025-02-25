@@ -475,38 +475,29 @@ const processRemainingChunks = async (index, collection, processguide, res) => {
 const handleAudioCreation = async (req, res) => {
   //////////////////////////////////////////////////////////
   //1, access uploaded file
-  const file = req.uploadedFile;
-  const { voiceActors, module, moduleDescription, text } = req.body;
+  
+  const { voiceActors,  module, moduleDescription, ebookId } = req.body;
   const voiceActorsArray = JSON.parse(voiceActors);
 
+
   try {
+    //get ebook by id
+    const ebook = await getEbookById(ebookId);
+
+    
+
     //////////////////////////////////////////////////////////
     //2, handle processing of the text
-    const { textChunks, description } = await handleTextProcessing(
-      module,
-      moduleDescription,
-      file,
-      text,
-      "audio",
-      res
-    );
-
-    ////////////////////////////////////////////////////////////
-    //3, adjust text contents or return an error if no content seems to be in the document
-    if (text?.length > 0) {
-      textChunks.unshift(text);
-    } else if (textChunks.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "we couldn't extract any text from the file" });
-    }
+    const textChunks = ebook
+    const textSections = ebook.content;
+    const description = ebook.description;
 
     //////////////////////////////////////////////////////////////////////
     //4, create an audio collection
     const newCollection = new AudioCollection({
       imageUrl: "https://i.ibb.co/MCPFhMT/headphones-3658441-1920.jpg",
       title: file.originalname,
-      description: description.introduction,
+      description: description,
       createdBy: req.user.id,
       textChunks: textChunks,
     });

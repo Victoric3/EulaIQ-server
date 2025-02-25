@@ -1,5 +1,6 @@
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
+const { Page } = require('puppeteer');
 
 /**
  * Convert PDF buffer to image buffers for specific pages
@@ -8,11 +9,13 @@ const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
  * @param {number} pageCount - Number of pages to convert (default 3)
  * @returns {Array} Array of image buffers with page numbers
  */
-const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 3) => {
+const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 2) => {
   try {
-    const pdfDoc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+    const pdfDoc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise; 
     const totalPages = pdfDoc.numPages;
-    const endPage = Math.min(startPage + pageCount, totalPages);
+    const endPage = Math.min(startPage + pageCount, totalPages - 1);
+    console.log(endPage, startPage, pageCount, totalPages);
+    const newPageCount = endPage - startPage + 1;
     
     const imageBuffers = [];
 
@@ -38,8 +41,8 @@ const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 3) => {
         page: pageNum - 1 // Return 0-based index
       });
     }
-    console.log("imageBuffers: ", imageBuffers);
-    return imageBuffers;
+
+    return {imageBuffers, totalPages, newPageCount};
   } catch (error) {
     console.error('Conversion error:', error);
     throw error;

@@ -59,6 +59,7 @@
     "mongoose": "^6.1.8",
     "multer": "^1.4.4-lts.1",
     "music-metadata": "^10.0.0",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.6",
     "office-converter": "^1.0.2",
     "officeparser": "^4.1.1",

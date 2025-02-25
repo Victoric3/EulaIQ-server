@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const isTokenIncluded = (req) => {
   return (
@@ -27,24 +28,36 @@ const getAccessTokenFromCookies = (req) => {
   return token;
 };
 
-const sendToken = (user, statusCode, res, message) => {
+// Improved Implementation
+const sendToken = async (user, statusCode, res, message) => {
   const token = user.generateJwtFromUser();
-  // Set cookie options
   const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ),
+    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: 'strict',
+    path: '/'
   };
 
-  // Send the response
-  return res.status(statusCode).cookie("token", token, cookieOptions).json({
-    status: "success",
-    message,
-    role: user.role,
-    token: token,
-  });
+  // Add session and token validation
+  const sessionData = {
+    token: crypto.createHash('sha256').update(token).digest('hex'),
+    device: req.headers['user-agent'],
+    ipAddress: req.ip
+  };
+  
+  await user.addSession(sessionData);
+  user.validTokens = user.validTokens || [];
+  user.validTokens.push(sessionData.token);
+  await user.save();
+
+  return res.status(statusCode)
+    .cookie("token", token, cookieOptions)
+    .json({
+      status: "success",
+      message,
+      token
+    });
 };
 
 module.exports = {

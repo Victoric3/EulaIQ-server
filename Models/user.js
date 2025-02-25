@@ -28,7 +28,8 @@ const UserSchema = new mongoose.Schema({
       },
       anonymousId: {
         type: String,
-        unique: true
+        sparse: true,
+        index: true
       },
       accountType: {
         type: String,
@@ -36,7 +37,10 @@ const UserSchema = new mongoose.Schema({
         default: 'registered'
       },
     grade: String,
-    temporary: Boolean,
+    temporary: {
+        type: Boolean,
+        default: false
+    },
     username : {
         type :String,
         required : [true ,"Please provide a username"]
@@ -96,16 +100,35 @@ const UserSchema = new mongoose.Schema({
     },
     ipAddress: {
         type: [String],
-        required: true
+        default: []
     },
     deviceInfo: {
         type: [Object],
         required: true
     },
     resetPasswordToken : String ,
-    resetPasswordExpire: Date 
-
-
+    resetPasswordExpire: Date,
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
+    sessions: [{
+        token: String,
+        device: String,
+        lastActive: Date,
+        expiresAt: Date,
+        ipAddress: String
+    }],
+    validTokens: [String],
+    maxSessions: {
+        type: Number,
+        default: 5
+    },
+    passwordHistory: {
+        type: [String],
+        select: false,
+        default: []
+    }
 },{timestamps: true})
 
 
@@ -159,6 +182,68 @@ UserSchema.methods.createToken = function(){
     this.verificationTokenExpires = Date.now() + 20 * 60 * 1000;
     return verificationToken
 }
+
+// Add password history methods
+UserSchema.methods.isPasswordPreviouslyUsed = async function(newPassword) {
+  const user = await this.model('User').findById(this._id).select('+passwordHistory');
+  if (!user.passwordHistory) return false;
+  
+  for (const oldPassword of user.passwordHistory) {
+    if (await bcrypt.compare(newPassword, oldPassword)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Add session management methods
+UserSchema.methods.addSession = async function(sessionData) {
+  this.sessions = this.sessions || [];
+  
+  // Remove expired sessions
+  this.sessions = this.sessions.filter(session => 
+    session.expiresAt > Date.now()
+  );
+  
+  // Check max sessions
+  if (this.sessions.length >= this.maxSessions) {
+    this.sessions.shift(); // Remove oldest session
+  }
+  
+  this.sessions.push({
+    ...sessionData,
+    lastActive: new Date(),
+    expiresAt: new Date(Date.now() + 24*60*60*1000) // 24 hours
+  });
+};
+
+UserSchema.methods.validateSession = function(token) {
+  return this.validTokens && this.validTokens.includes(
+    crypto.createHash('sha256').update(token).digest('hex')
+  );
+};
+
+UserSchema.methods.cleanupSessions = async function() {
+  const now = Date.now();
+  const hadExpired = this.sessions.some(session => session.expiresAt <= now);
+  
+  if (hadExpired) {
+    this.sessions = this.sessions.filter(session => session.expiresAt > now);
+    this.validTokens = this.validTokens.filter(token => {
+      return this.sessions.some(session => session.token === token);
+    });
+    await this.save();
+  }
+  return hadExpired;
+};
+
+// Add pre-find middleware to clean sessions
+UserSchema.pre('find', async function() {
+  const users = await this.model.find(this.getQuery());
+  for (const user of users) {
+    await user.cleanupSessions();
+  }
+});
 
 const User = mongoose.model("User",UserSchema)
 

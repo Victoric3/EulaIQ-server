@@ -1,12 +1,10 @@
 const CustomError = require("../../Helpers/error/CustomError");
 const User = require("../../Models/user");
 const jwt = require("jsonwebtoken");
-const asyncErrorWrapper = require("express-async-handler");
 const {
   isTokenIncluded,
   getAccessTokenFromCookies,
 } = require("../../Helpers/auth/tokenHelpers");
-const express = require("express");
 const rateLimit = require("express-rate-limit");
 
 const getAccessToRoute = async (req, res, next) => {
@@ -41,6 +39,44 @@ const getAccessToRoute = async (req, res, next) => {
   }
 };
 
+const validateSession = async (req, res, next) => {
+  try {
+    const token = getAccessTokenFromCookies(req);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.id);
+    
+    // Clean up expired sessions first
+    await user.cleanupSessions();
+    
+    if (!user || !user.validateSession(token)) {
+      return res.status(401).json({
+        status: "failed",
+        errorMessage: "Invalid or expired session"
+      });
+    }
+
+    // Update session last active time
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const session = user.sessions.find(s => s.token === hashedToken);
+    
+    if (session) {
+      session.lastActive = new Date();
+      session.expiresAt = new Date(Date.now() + 24*60*60*1000); // Extend session
+      await user.save();
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error("Session validation error:", error);
+    return res.status(401).json({
+      status: "failed", 
+      errorMessage: "Not authorized to access this route"
+    });
+  }
+};
+
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 2, // 2 requests per minute
@@ -50,4 +86,4 @@ const apiLimiter = rateLimit({
   },
 });
 
-module.exports = { getAccessToRoute, apiLimiter };
+module.exports = { getAccessToRoute, apiLimiter, validateSession };

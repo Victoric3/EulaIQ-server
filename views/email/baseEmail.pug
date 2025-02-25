@@ -3,33 +3,112 @@ html
   head
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     meta(http-equiv="Content-Type", content="text/html; charset=UTF-8")
-    link(rel="stylesheet", type="text/css", href="./style.css")
+    style.
+      :root {
+        --brand-deep-gold: #B18958;
+        --brand-warm-orange: #D97706;
+        --neutral-light-gray: #F3F4F6;
+        --neutral-dark-gray: #374151;
+        --dark-bg: #1B1B1B;
+        --text-primary: #F8F9FA;
+        --text-dark: #2D2D2D;
+        --neon-cyan: #00F3FF;
+        --neon-purple: #BC00FF;
+      }
+
+      body {
+        background-color: var(--neutral-light-gray);
+        font-family: 'Arial', sans-serif;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--brand-deep-gold), var(--brand-warm-orange));
+        border-radius: 8px 8px 0 0;
+      }
+
+      .logo {
+        width: 120px;
+        height: auto;
+      }
+
+      .content {
+        background: white;
+        padding: 30px;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+        color: var(--text-primary);
+        text-decoration: none;
+        border-radius: 4px;
+        margin: 20px 0;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .feature-list {
+        margin: 20px 0;
+        padding-left: 20px;
+      }
+
+      .feature-item {
+        margin-bottom: 10px;
+        position: relative;
+        padding-left: 25px;
+      }
+
+      .feature-item:before {
+        content: "•";
+        color: var(--brand-warm-orange);
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: var(--neutral-dark-gray);
+        font-size: 0.9em;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: var(--dark-bg);
+          color: var(--text-primary);
+        }
+        
+        .content {
+          background-color: var(--dark-bg);
+          border: 1px solid var(--neon-cyan);
+        }
+      }
     title #{subject}
 
-  body(style="background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;")
-    span.preheader(style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all; visibility: hidden; width: 0;") This is preheader text. Some clients will show this text as a preview.
-    table.body(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f6f6f6; width: 100%;", width="100%", bgcolor="#f6f6f6")
-      tr
-        td(style="font-family: sans-serif; font-size: 14px; vertical-align: top;", valign="top") &amp;nbsp;
-        td.container(style="font-family: sans-serif; font-size: 14px; vertical-align: top; display: block; max-width: 580px; padding: 10px; width: 580px; margin: 0 auto;", width="580", valign="top")
-          .content(style="box-sizing: border-box; display: block; margin: 0 auto; max-width: 580px; padding: 10px;")
-            table.main(role="presentation", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background: #ffffff; border-radius: 3px; width: 100%;", width="100%")
-              tr
-                td.wrapper(style="font-family: sans-serif; font-size: 14px; vertical-align: top; box-sizing: border-box; padding: 20px;", valign="top")
-                  table(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;", width="100%")
-                    tr
-                      td(style="font-family: sans-serif; font-size: 14px; vertical-align: top;", valign="top")
-                        block content
-                        // END MAIN CONTENT AREA
-            // END CENTERED WHITE CONTAINER
-            // START FOOTER
-            .footer(style="clear: both; margin-top: 10px; text-align: center; width: 100%;")
-              table(role="presentation", border="0", cellpadding="0", cellspacing="0", style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;", width="100%")
-                tr
-                  td.content-block(style="font-family: sans-serif; vertical-align: top; padding-bottom: 10px; padding-top: 10px; color: #999999; font-size: 12px; text-align: center;", valign="top", align="center")
-                    br
-                    | Don&apos;t like these emails?
-                    a(href=`${process.env.FRONTEND_BASEURL}/unsubscribeEmail`, style="text-decoration: underline; color: #999999; font-size: 12px; text-align: center;") Unsubscribe
-                    | .
-            // END FOOTER
-        td(style="font-family: sans-serif; font-size: 14px; vertical-align: top;", valign="top") &amp;nbsp;
+  body
+    .container
+      .header
+        img.logo(src="[EulaIQ-logo-url]", alt="EulaIQ")
+        h1(style="color: var(--text-primary);") Transform Your Medical Education
+      .content
+        block content
+      .footer
+        p Powered by EulaIQ - Making Medical Knowledge Accessible
+        p Questions? Contact us at 
+          a(href=`mailto:${process.env.EMAIL_ACCOUNT}`)= process.env.EMAIL_ACCOUNT

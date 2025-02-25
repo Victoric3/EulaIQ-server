@@ -2,60 +2,85 @@ const { queryCreator } = require("../../data/audioModules");
 const { textToSpeech } = require("./tts");
 const { generateSSML } = require("./ssmlTemplate");
 const { extractAndParseJSON } = require("../input/escapeStrinedJson");
-const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
+const axios = require('axios');
+const fs = require('fs/promises');
+const path = require('path');
 
-const azureOpenai = async (query, systemInstruction, deployment, images = []) => {
-  console.log("called azureOpenai", query, systemInstruction, deployment, images);
+async function azureOpenai(query, systemInstruction, deployment, imagePaths = []) {
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const apiKey = process.env.AZURE_OPENAI_APIKEY;
+  const apiVersion = "2024-05-01-preview";
+
+  // 1. Process images to base64
+  const imageContents = await Promise.all(
+    imagePaths.map(async (path) => {
+      const data = await fs.readFile(path);
+      const mimeType = getMimeType(path);
+      return {
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType};base64,${data.toString('base64')}`
+        }
+      };
+    })
+  );
+
+  // 2. Construct message payload exactly matching AI Studio format
+  const messages = [
+    {
+      role: "system",
+      content: [{
+        type: "text",
+        text: systemInstruction
+      }]
+    },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: query },
+        ...imageContents,
+        // Add additional text content if needed
+      ]
+    }
+  ];
+
+  // 3. Make direct API call
   try {
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_APIKEY;
-
-    // Initialize client
-    const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
-    
-    // Prepare messages
-    const messages = [
-      { role: "system", content: systemInstruction },
+    const response = await axios.post(
+      `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`,
       {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: query
-          },
-          {
-            type: "image_url",
-            image_url: { url: images[0] },
-          },
-        ],
+        messages,
+        temperature: 0.7,
+        top_p: 0.95,
+        max_tokens: 4000
       },
-    ];
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": apiKey
+        }
+      }
+    );
 
-    // Add image URLs if provided
-    // if (images.length > 0) {
-    //   const imageMessages = images.map((imageUrl) => ({
-    //     type: "image_url",
-    //     image_url: { url: imageUrl },
-    //   }));
-    //   messages[1].content.push(...imageMessages);
-    // }
-
-    // console.log("messages: ", messages[1].content[0]);
-    // console.log("messages: ", messages[1].content[1]);
-    // console.log("messages: ", messages[1].content[2]);
-    // console.log("messages: ", messages[1].content[3]);
-
-    // Get completions
-    const response = await client.getChatCompletions(deployment, messages, {
-      maxTokens: 4000,
-    });
-
-    return response.choices[0]?.message?.content || "";
-  } catch (err) {
-    console.error("Azure OpenAI Error:", err);
-    throw err;
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error("API Error:", error.response?.data || error.message);
+    throw error;
   }
-};
+}
+
+// Helper function from previous implementation
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  switch(ext) {
+    case '.png': return 'image/png';
+    case '.jpg': case '.jpeg': return 'image/jpeg';
+    case '.gif': return 'image/gif';
+    case '.webp': return 'image/webp';
+    default: return 'application/octet-stream';
+  }
+}
+
 
 
 

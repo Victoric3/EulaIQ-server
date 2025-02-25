@@ -76,7 +76,6 @@ async function azureOcr(tempFilePath) {
       const extractedTexts = ocrResults.map((result, index) =>
         extractTextFromOcrResult(result, index)
     );
-    console.log("extractedTexts: ", extractedTexts);
     
     return extractedTexts;
   } catch (error) {

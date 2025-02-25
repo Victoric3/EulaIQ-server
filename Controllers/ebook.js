@@ -4,11 +4,6 @@ const createEbook = async (req, file) => {
   try {
     const story = new Story({
       title: file.originalname.replace(/\.[^/.]+$/, ""), // Remove extension
-      content: [], // Will be populated during text extraction
-      contentTitles: [],
-      summaries: [],
-      audioCollections: [],
-      questions: [],
       author: req.user.id,
       image: req.user.photo,
       status: "processing-1",

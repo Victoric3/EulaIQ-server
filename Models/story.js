@@ -26,13 +26,10 @@ const StorySchema = new mongoose.Schema(
       required: [true, "Please provide content"],
       default: [],
     },
-    contentTitles: {
-      type: [{
-        title: String,
-        type: String,
-        page: Number
-      }],
-      default: []
+    contentTitle: {
+      type: [Object],
+      required: [true, "Please provide content titles"],
+      default: [],
     },
     fileUrl: {
       type: String,

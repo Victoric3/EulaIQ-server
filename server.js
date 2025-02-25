@@ -9,6 +9,7 @@ const customErrorHandler = require("./Middlewares/Errors/customErrorHandler");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const socketIo = require("socket.io");
+const cron = require('node-cron');
 
 dotenv.config({ path: "./config.env" });
 
@@ -47,6 +48,10 @@ app.get("/", (req, res) => {
 app.use("/", IndexRoute);
 app.use(customErrorHandler);
 
+// API Version and Base URL setup
+const routes = require('./Routers');
+app.use(process.env.API_VERSION, routes);
+
 const port = process.env.PORT || 5000;
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -56,6 +61,19 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
+});
+
+// Run cleanup every day at midnight
+cron.schedule('0 0 * * *', async () => {
+  try {
+    const users = await User.find({});
+    for (const user of users) {
+      await user.cleanupSessions();
+    }
+    console.log('Session cleanup completed');
+  } catch (error) {
+    console.error('Session cleanup failed:', error);
+  }
 });
 
 server.listen(port, () => {

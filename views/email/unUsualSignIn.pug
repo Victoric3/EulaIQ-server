@@ -1,34 +1,14 @@
 extends baseEmail
 
 block content
-  // Logo and site name at the top
-  div(style="text-align: center; margin-bottom: 20px;")
-    img(src="https://i.ibb.co/NNbc0wp/logo-icon.png", alt= `${process.env.SITE_NAME} Logo`, style="height: 50px; border-radius: 50%; vertical-align: middle;")
-    span(style="font-family: sans-serif; font-size: 24px; font-weight: bold; vertical-align: middle; color: #333; margin-left: 10px;")
-      | #{process.env.SITE_NAME}
-
-  // Notification about unusual sign-in attempt
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px; text-align: center;")
-    | We have detected an unusual sign-in attempt on your #{process.env.SITE_NAME} account.
-    br
-    | To ensure the security of your account, please confirm your account by entering the verification code below:
-  
-  // Verification code section
-  p(style="font-family: sans-serif; font-size: 25px; font-weight: bold; text-align: center; color: #333; margin: 20px 0;")
-    | #{url}
-
-  // Additional instructions
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | If you did not attempt to sign in, please change your password immediately and contact our support team.
-
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | For security reasons, this confirmation code will expire in 20 minutes.
-
-  // Closing and contact information
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 15px 0; text-align: center;")
-    | Thank you for using #{process.env.SITE_NAME}! If you encounter any issues or need further assistance, please don't hesitate to contact us at
-
-  // Contact email
-  p(style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; text-align: center;")
-    a(href= `mailto:${process.env.EMAIL_ACCOUNT}`, style="color: #ff3811; text-decoration: none;")
-      | #{process.env.EMAIL_ACCOUNT}
+  div.content-wrapper
+    h2(style="color: var(--brand-deep-gold); margin-bottom: 24px;") New Sign-in Detected
+    
+    p Hi #{firstName},
+    
+    p We noticed a sign-in attempt from a new location. To ensure your account's security, please verify this was you:
+    
+    div(style="text-align: center; margin: 32px 0;")
+      a.button(href=url) Verify Sign-in
+    
+    p If you didn't try to sign in, please change your password immediately and contact our support team.
