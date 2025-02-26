@@ -1,19 +1,31 @@
 extends baseEmail
 
 block content
-  div.content-wrapper
-    h2(style="color: var(--brand-deep-gold); margin-bottom: 24px;") Welcome to EulaIQ!
-    
-    p Hi #{firstName},
-    
-    p We're excited to have you join EulaIQ, your AI-powered medical education platform. Get ready to transform how you learn and understand medical concepts.
-    
-    div.feature-list
-      div.feature-item Convert textbooks into digestible content
-      div.feature-item Generate personalized study materials
-      div.feature-item Access AI-powered learning assistance
-      div.feature-item Join a community of medical students
-    
-    a.button(href=url) Start Learning Now
-    
-    p(style="margin-top: 24px;") Need help getting started? Our AI Copilot is here to guide you through every step of your learning journey.
+  table(width="100%" border="0" cellpadding="0" cellspacing="0")
+    tr
+      td(style="padding-bottom: 24px;")
+        h2(style="color: #B18958; margin: 0 0 24px; font-size: 20px;") Welcome to EulaIQ!
+    tr
+      td(style="padding-bottom: 16px;")
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Hi #{firstName},
+    tr
+      td(style="padding-bottom: 24px;")
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Transform your medical learning experience with:
+    tr
+      td(style="padding-bottom: 24px;")
+        table(width="100%" cellpadding="0" cellspacing="0")
+          tr
+            td(style="padding: 8px 0;") ✓ Convert textbooks to digestible content
+          tr
+            td(style="padding: 8px 0;") ✓ Generate personalized study materials
+          tr  
+            td(style="padding: 8px 0;") ✓ Access AI-powered learning assistance
+          tr
+            td(style="padding: 8px 0;") ✓ Join medical student community
+    tr
+      td(align="center" style="padding: 32px 0;")
+        a(href=url style="color: #D97706; text-decoration: underline; font-size: 16px; font-weight: bold;") Start Learning Now
+    tr
+      td(style="padding-top: 24px;")
+        p(style="color: #374151; margin: 0; font-size: 14px; line-height: 1.5;")
+          | Need help? Our AI Copilot is ready to guide your learning journey.

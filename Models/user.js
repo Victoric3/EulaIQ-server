@@ -96,7 +96,7 @@ const UserSchema = new mongoose.Schema({
     },
     location: {
         type: [Object],
-        required: true
+        default: []
     },
     ipAddress: {
         type: [String],
@@ -104,7 +104,7 @@ const UserSchema = new mongoose.Schema({
     },
     deviceInfo: {
         type: [Object],
-        required: true
+        default: []
     },
     resetPasswordToken : String ,
     resetPasswordExpire: Date,
@@ -199,21 +199,30 @@ UserSchema.methods.isPasswordPreviouslyUsed = async function(newPassword) {
 // Add session management methods
 UserSchema.methods.addSession = async function(sessionData) {
   this.sessions = this.sessions || [];
+  this.validTokens = this.validTokens || [];
   
+  const now = Date.now();
+  const expiredSessionTokens = this.sessions
+    .filter(session => session.expiresAt <= now)
+    .map(session => session.token);
   // Remove expired sessions
   this.sessions = this.sessions.filter(session => 
-    session.expiresAt > Date.now()
+    session.expiresAt > now
+  );
+  this.validTokens = this.validTokens.filter(token => 
+    !expiredSessionTokens.includes(token)
   );
   
   // Check max sessions
   if (this.sessions.length >= this.maxSessions) {
     this.sessions.shift(); // Remove oldest session
+    this.validTokens.shift(); // Remove oldest validToken
   }
   
   this.sessions.push({
     ...sessionData,
     lastActive: new Date(),
-    expiresAt: new Date(Date.now() + 24*60*60*1000) // 24 hours
+    expiresAt: new Date(now + 24*60*60*1000) // 24 hours
   });
 };
 
@@ -225,16 +234,31 @@ UserSchema.methods.validateSession = function(token) {
 
 UserSchema.methods.cleanupSessions = async function() {
   const now = Date.now();
-  const hadExpired = this.sessions.some(session => session.expiresAt <= now);
   
-  if (hadExpired) {
-    this.sessions = this.sessions.filter(session => session.expiresAt > now);
-    this.validTokens = this.validTokens.filter(token => {
-      return this.sessions.some(session => session.token === token);
-    });
+  // Find expired sessions
+  const expiredSessions = this.sessions.filter(session => 
+    session.expiresAt <= now
+  );
+  
+  if (expiredSessions.length > 0) {
+    // Get tokens from expired sessions
+    const expiredTokens = expiredSessions.map(session => session.token);
+    
+    // Remove expired sessions
+    this.sessions = this.sessions.filter(session => 
+      session.expiresAt > now
+    );
+    
+    // Remove expired tokens from validTokens
+    this.validTokens = this.validTokens.filter(token => 
+      !expiredTokens.includes(token)
+    );
+    
     await this.save();
+    return true;
   }
-  return hadExpired;
+  
+  return false;
 };
 
 // Add pre-find middleware to clean sessions

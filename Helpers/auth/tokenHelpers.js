@@ -29,7 +29,7 @@ const getAccessTokenFromCookies = (req) => {
 };
 
 // Improved Implementation
-const sendToken = async (user, statusCode, res, message) => {
+const sendToken = async (user, statusCode, req, res, message, device) => {
   const token = user.generateJwtFromUser();
   const cookieOptions = {
     expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
@@ -42,7 +42,7 @@ const sendToken = async (user, statusCode, res, message) => {
   // Add session and token validation
   const sessionData = {
     token: crypto.createHash('sha256').update(token).digest('hex'),
-    device: req.headers['user-agent'],
+    device,
     ipAddress: req.ip
   };
   

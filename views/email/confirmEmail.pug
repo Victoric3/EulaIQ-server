@@ -1,14 +1,25 @@
 extends baseEmail
 
 block content
-  div.content-wrapper
-    h2(style="color: var(--brand-deep-gold); margin-bottom: 24px;") Verify Your Email
-    
-    p Hello #{firstName},
-    
-    p Please verify your email address to access all of EulaIQ's features:
-    
-    div(style="text-align: center; margin: 32px 0;")
-      a.button(href=url) Verify Email Address
-    
-    p This verification link will expire in 20 Minutes. If you didn't create an account with EulaIQ, please ignore this email.
+  table(width="100%" border="0" cellpadding="0" cellspacing="0")
+    tr
+      td(style="padding-bottom: 24px; font-family: Arial, sans-serif;")
+        h2(style="color: #B18958; margin: 0 0 24px; font-size: 20px;") Verify Your Email
+    tr
+      td(style="padding-bottom: 16px; font-family: Arial, sans-serif;")
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Hello #{firstName},
+    tr
+      td(style="padding-bottom: 24px; font-family: Arial, sans-serif;")
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Please verify your email address to access all of EulaIQ's features:
+    tr
+      td(align="center" style="padding: 32px 0;")
+        table(cellpadding="0" cellspacing="10" border="0")
+          tr
+            each digit in url.toString().split('')
+              td(style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; color: #B18958; background: #ffffff; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);")= digit
+    tr
+      td(align="center" style="padding-top: 24px; font-family: Arial, sans-serif;")
+        p(style="color: #374151; margin: 0; font-size: 14px; line-height: 1.5;")
+          | This verification code will expire in 20 Minutes.
+          br
+          | If you didn't create an account with EulaIQ, please ignore this email.

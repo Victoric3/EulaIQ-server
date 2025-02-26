@@ -84,7 +84,8 @@
     "start": "^5.1.0",
     "stream": "^0.0.2",
     "uuid": "^8.0.0",
-    "xlsx": "^0.17.0"
+    "xlsx": "^0.17.0",
+    "zeptomail": "^6.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

@@ -21,7 +21,7 @@ const anonymousRateLimit = rateLimit({
   message: "Too many anonymous accounts created from this IP"
 });
 
-const createAnonymousUser = async (ipAddress) => {
+const createAnonymousUser = async (ipAddress, deviceInfo) => {
   try {
     const anonymousId = generateAnonymousId();
     const username = await generateUniqueUsername();
@@ -34,7 +34,8 @@ const createAnonymousUser = async (ipAddress) => {
       ipAddress: [ipAddress],
       isAnonymous: true,
       anonymousId,
-      temporary: true
+      temporary: true,
+      deviceInfo
     });
 
     return anonymousUser;
@@ -45,8 +46,9 @@ const createAnonymousUser = async (ipAddress) => {
 
 const getAnonymousSession = async (req, res) => {
   try {
-    const { deviceInfo, ipAddress, location } = req.body;
-    console.log(deviceInfo, ipAddress, location);
+    const { deviceInfo, ipAddress } = req.body;
+    console.log("deviceInfo: ", deviceInfo);
+
     // Input validation
     if (!deviceInfo) {
       return res.status(400).json({
@@ -63,18 +65,19 @@ const getAnonymousSession = async (req, res) => {
       "deviceInfo.deviceId": deviceInfo.deviceId,
     });
 
-    // console.log("anonymousUser: ", anonymousUser);
-
+    
+    
     if (!anonymousUser) {
       anonymousUser = await createAnonymousUser(
-        ipAddress
+        ipAddress,
+        deviceInfo
       );
-      // console.log("anonymousUser:", anonymousUser);
     }
+    console.log("anonymousUser: ", anonymousUser);
 
-    return sendToken(anonymousUser, 200, res, "anonymous session created");
+    return sendToken(anonymousUser, 200, req, res, "anonymous session created");
   } catch (error) {
-    // console.error("Anonymous session error:", error);
+    console.error("Anonymous session error:", error);
 
     // More specific error messages based on error type
     const errorMessage =

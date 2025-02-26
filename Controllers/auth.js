@@ -33,25 +33,85 @@ const getPrivateData = (req, res, next) => {
   }
 };
 
+const testmail = async (req, res) => {
+  try {
+    new Email(req.body.user, req.body.verificationToken).sendPasswordReset()
+      .catch(err => console.error("Email sending error:", err));
+    res.status(201).json({
+      success: true,
+      message: "Email sent successfully",
+    });
+  } catch (e) {
+    console.log(e)
+    res.status(500).json({
+      success: false,
+      message: "Error You are not authorized to access this route",
+    });
+  }
+};
+
 const register = async (req, res) => {
-  const { email, password, ipAddress, anonymousId } = req.body;
+  const { firstname, lastname, email, password, ipAddress, anonymousId, deviceInfo } = req.body;
 
   try {
-    const existingUser = await User.findOne({
-      $or: [
-        { email },
-        { anonymousId }
-      ]
-    });
+    // Check if this is an anonymous account conversion
+    if (anonymousId) {
+      const anonymousUser = await User.findOne({
+        anonymousId,
+        isAnonymous: true
+      });
 
+      if (anonymousUser) {
+        // Convert anonymous account to full account
+        anonymousUser.firstname = firstname;
+        anonymousUser.lastname = lastname;
+        anonymousUser.email = email;
+        anonymousUser.password = password;
+        anonymousUser.isAnonymous = false;
+        anonymousUser.temporary = false;
+        anonymousUser.emailStatus = "pending";
+        anonymousUser.passwordHistory = [password];
+
+        // Add new IP if not already present
+        if (!anonymousUser.ipAddress.includes(ipAddress)) {
+          anonymousUser.ipAddress.push(ipAddress);
+        }
+
+        const verificationToken = anonymousUser.createToken();
+
+        // Add new session
+        await anonymousUser.addSession({
+          token: crypto.createHash('sha256').update(verificationToken).digest('hex'),
+          device: deviceInfo,
+          ipAddress
+        });
+
+        await anonymousUser.save();
+
+        // Send verification email
+        new Email(anonymousUser, verificationToken).sendConfirmEmail()
+          .catch(err => console.error("Email sending error:", err));
+
+        return sendToken(anonymousUser, 200, res,
+          "Anonymous account converted successfully. Please check your email to verify your account.",
+          deviceInfo
+        );
+      }
+    }
+
+    // Check for existing email account
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         status: "failed",
-        errorMessage: "User already exists"
+        errorMessage: "Email already registered"
       });
     }
 
+    // Create new user
     const newUser = await User.create({
+      firstname,
+      lastname,
       email,
       password,
       ipAddress: [ipAddress],
@@ -60,25 +120,26 @@ const register = async (req, res) => {
       isAnonymous: false,
       temporary: false,
       emailStatus: "pending",
-      passwordHistory: [password] // Initialize password history
+      passwordHistory: [password]
     });
 
     const verificationToken = newUser.createToken();
-    
-    // Add initial session
+
     await newUser.addSession({
       token: crypto.createHash('sha256').update(verificationToken).digest('hex'),
-      device: req.headers['user-agent'],
+      device: deviceInfo,
       ipAddress
     });
-    
+
     await newUser.save();
 
-    // Send verification email in background
     new Email(newUser, verificationToken).sendConfirmEmail()
       .catch(err => console.error("Email sending error:", err));
 
-    return sendToken(newUser, 201, res, "Registration successful. Please check your email to verify your account.");
+    return sendToken(newUser, 201, req, res,
+      "Registration successful. Please check your email to verify your account.",
+      deviceInfo
+    );
   } catch (error) {
     console.error("Registration error:", error);
     return res.status(500).json({
@@ -90,7 +151,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { identity, password, ipAddress, anonymousId } = req.body;
+    const { identity, password, ipAddress, device } = req.body;
 
     if (!identity || !password) {
       return res.status(400).json({
@@ -99,12 +160,7 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      $or: [
-        { email: identity },
-        { anonymousId }
-      ]
-    }).select("+password");
+    const user = await User.findOne({ email: identity }).select("+password");
 
     if (!user || !comparePassword(password, user.password)) {
       return res.status(400).json({
@@ -117,9 +173,9 @@ const login = async (req, res) => {
     if (checkIpAddressChange(user, ipAddress)) {
       const verificationToken = user.createToken();
       await user.save();
-      
+
       // Send verification email in background
-      new Email(user, verificationToken).sendUnusualSignIn()
+      new Email(user, verificationToken).sendUnUsualSignIn()
         .catch(err => console.error("Email sending error:", err));
 
       return res.status(403).json({
@@ -131,9 +187,8 @@ const login = async (req, res) => {
 
     // Update IP in background if verification not needed
     addIpAddress(user, ipAddress);
-    user.save().catch(console.error);
 
-    return sendToken(user, 200, res, "Login successful");
+    return sendToken(user, 200, req, res, "Login successful", device);
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({
@@ -186,10 +241,8 @@ const forgotpassword = async (req, res) => {
     }
 
     let resetPasswordToken;
-    console.log("user: ", user);
     try {
       resetPasswordToken = await user.createToken();
-      console.log("resetPasswordToken: ", resetPasswordToken);
     } catch (err) {
       console.log(err);
     }
@@ -248,7 +301,7 @@ const resetpassword = async (req, res) => {
     user.passwordHistory = user.passwordHistory || [];
     user.passwordHistory.push(user.password);
     if (user.passwordHistory.length > 5) user.passwordHistory.shift();
-    
+
     user.password = newPassword;
     user.tokenVersion += 1;
     user.verificationToken = undefined;
@@ -275,7 +328,7 @@ const resetpassword = async (req, res) => {
 
 const confirmEmailAndSignUp = catchAsync(async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, deviceInfo } = req.body;
     const hashedToken = crypto
       .createHash("shake256")
       .update(token)
@@ -303,7 +356,7 @@ const confirmEmailAndSignUp = catchAsync(async (req, res) => {
     new Email(user).sendWelcome()
       .catch(err => console.error("Welcome email error:", err));
 
-    return sendToken(user, 200, res, "Email verified successfully. Welcome to EulaIQ!");
+    return sendToken(user, 200, req, res, "Email verified successfully. Welcome to EulaIQ!", deviceInfo);
   } catch (error) {
     console.error("Email confirmation error:", error);
     return res.status(500).json({
@@ -314,7 +367,7 @@ const confirmEmailAndSignUp = catchAsync(async (req, res) => {
 });
 
 const unUsualSignIn = async (req, res) => {
-  const { token, ipAddress } = req.body;
+  const { token, ipAddress, device } = req.body;
   try {
     const hashedToken = crypto.createHash("shake256").update(token).digest("hex");
     const user = await User.findOne({
@@ -335,7 +388,7 @@ const unUsualSignIn = async (req, res) => {
     user.verificationTokenExpires = undefined;
     await user.save();
 
-    return sendToken(user, 200, res, "Verification successful");
+    return sendToken(user, 200, req, res, "Verification successful", device);
   } catch (err) {
     console.error("Unusual signin error:", err);
     return res.status(500).json({
@@ -345,28 +398,36 @@ const unUsualSignIn = async (req, res) => {
   }
 };
 
-//TODO: correct security breech caused by alloowing sign in without password
 const resendVerificationToken = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
+  try {
 
-  const user = await User.findOne({
-    email,
-  });
-  if (!user) {
-    res.status(400).json({
-      status: "failed",
-      errorMessage: "user not found",
+    const { email } = req.body;
+
+    const user = await User.findOne({
+      email,
     });
-    return;
+    if (!user) {
+      res.status(400).json({
+        status: "failed",
+        errorMessage: "user not found",
+      });
+      return;
+    }
+    const verificationToken = user.createToken();
+    await user.save();
+    await new Email(user, verificationToken).sendverificationtoken();
+    res.status(200).json({
+      status: "success",
+      message:
+        "An email has been sent to your inbox for verification. Please proceed to verify your email.",
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({
+      status: "failed",
+      errorMessage: "Internal server error"
+    });
   }
-  const verificationToken = user.createToken();
-  await user.save();
-  await new Email(user, verificationToken).sendverificationtoken();
-  res.status(200).json({
-    status: "success",
-    message:
-      "An email has been sent to your inbox for verification. Please proceed to verify your email.",
-  });
 });
 
 const verificationRateLimit = rateLimit({
@@ -376,6 +437,7 @@ const verificationRateLimit = rateLimit({
 });
 
 module.exports = {
+  testmail,
   register,
   login,
   resetpassword,
