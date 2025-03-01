@@ -1,3 +1,4 @@
+const v8 = require('v8');
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -75,6 +76,34 @@ cron.schedule('0 0 * * *', async () => {
     console.error('Session cleanup failed:', error);
   }
 });
+
+// Configure memory limits and monitoring
+const memoryLimit = process.env.NODE_ENV === 'production' ? 8192 : 4096; // MB
+process.env.NODE_OPTIONS = `--max-old-space-size=${memoryLimit}`;
+
+// Memory monitoring
+if (process.env.NODE_ENV === 'production') {
+  const MONITOR_INTERVAL = 60000; // 1 minute
+  
+  setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    const heapStats = v8.getHeapStatistics();
+    
+    console.log('Memory Usage:', {
+      rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`, // Resident Set Size
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+      external: `${Math.round(memoryUsage.external / 1024 / 1024)} MB`,
+      percentUsed: `${Math.round((memoryUsage.heapUsed / heapStats.heap_size_limit) * 100)}%`
+    });
+    
+    // Force garbage collection if available and memory usage is high
+    if (global.gc && (memoryUsage.heapUsed / heapStats.heap_size_limit) > 0.7) {
+      console.log('Running manual garbage collection');
+      global.gc();
+    }
+  }, MONITOR_INTERVAL);
+}
 
 server.listen(port, () => {
   console.log(`Server running on port ${port} : ${process.env.NODE_ENV}`);

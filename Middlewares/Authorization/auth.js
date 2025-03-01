@@ -6,6 +6,7 @@ const {
   getAccessTokenFromCookies,
 } = require("../../Helpers/auth/tokenHelpers");
 const rateLimit = require("express-rate-limit");
+const crypto = require("crypto");
 
 const getAccessToRoute = async (req, res, next) => {
   try {
@@ -42,9 +43,12 @@ const getAccessToRoute = async (req, res, next) => {
 const validateSession = async (req, res, next) => {
   try {
     const token = getAccessTokenFromCookies(req);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log(token);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    // console.log("decoded: ", decoded);
     
     const user = await User.findById(decoded.id);
+    // console.log("user", user);
     
     // Clean up expired sessions first
     await user.cleanupSessions();
@@ -62,7 +66,6 @@ const validateSession = async (req, res, next) => {
     
     if (session) {
       session.lastActive = new Date();
-      session.expiresAt = new Date(Date.now() + 24*60*60*1000); // Extend session
       await user.save();
     }
 

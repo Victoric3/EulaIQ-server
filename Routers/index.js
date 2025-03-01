@@ -9,11 +9,14 @@ const commentRoute = require("./comment");
 const questionRoute = require("./question");
 const examHistoryRoute = require("./examHistory");
 const sitemapRoute = require("./sitemapRouter");
+const notificationRoutes = require('./notification');
 // const searchSuggestionRoute = require('./searchSuggestions')
 const examRoute = require("./exam");
 const youtubeDataAnal = require("./youtubeDataAnal");
 const audio = require("./audio");
 
+
+router.use('/notifications', notificationRoutes);
 router.use("/auth", authRoute);
 router.use("/ebook", storyRoute);
 router.use("/user", userRoute);

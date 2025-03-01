@@ -200,11 +200,11 @@ const handleFileUpload = (req, res, next) => {
   const acceptedFileTypes = [
     ".pdf",
     ".docx",
-    ".json",
-    ".txt",
-    ".html",
-    ".csv",
-    ".ppt",
+    // ".json",
+    // ".txt",
+    // ".html",
+    // ".csv",
+    // ".ppt",
     ".pptx",
   ];
   const storage = multer.memoryStorage();

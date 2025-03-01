@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
+const { validateSession } = require("../Middlewares/Authorization/auth");
 const {
   addStory,
   addImage,
@@ -18,29 +18,28 @@ const {
 } = require("../Middlewares/database/databaseErrorhandler");
 const { handleImageUpload, handleFileUpload } = require("../Helpers/Libraries/handleUpload");
 const { handlegenerateEbook, handleContinueEbookGeneration } = require("../Controllers/file");
-
 const router = express.Router();
 
-router.post("/addstory", [getAccessToRoute, handleImageUpload], addStory);
-router.post("/handlegenerate", [getAccessToRoute, handleFileUpload], handlegenerateEbook);
-router.post('/ebooks/:ebookId/continue', getAccessToRoute, handleContinueEbookGeneration);
-router.post("/addImage", [getAccessToRoute, handleImageUpload], addImage);
+router.post("/addstory", [validateSession, handleImageUpload], addStory);
+router.post("/handlegenerate", [validateSession, handleFileUpload], handlegenerateEbook);
+router.post('/ebooks/:ebookId/continue', validateSession, handleContinueEbookGeneration);
+router.post("/addImage", [validateSession, handleImageUpload], addImage);
 
-router.get("/:slug", [getAccessToRoute, checkStoryExist], detailStory);
+router.get("/:slug", [validateSession, checkStoryExist], detailStory);
 
-router.post("/:slug/like", [getAccessToRoute, checkStoryExist], likeStory);
-router.put("/:slug/rate", [getAccessToRoute, checkStoryExist], rateStory);
+router.post("/:slug/like", [validateSession, checkStoryExist], likeStory);
+router.put("/:slug/rate", [validateSession, checkStoryExist], rateStory);
 
 router.get(
   "/editStory/:slug",
-  [getAccessToRoute, checkStoryExist, checkUserAndStoryExist],
+  [validateSession, checkStoryExist, checkUserAndStoryExist],
   editStoryPage
 );
 
 router.patch(
   "/:slug/edit",
   [
-    getAccessToRoute,
+    validateSession,
     checkStoryExist,
     checkUserAndStoryExist,
     handleImageUpload,
@@ -50,10 +49,10 @@ router.patch(
 
 router.delete(
   "/:slug/delete",
-  [getAccessToRoute, checkStoryExist, checkUserAndStoryExist],
+  [validateSession, checkStoryExist, checkUserAndStoryExist],
   deleteStory
 );
 
-router.get("/getAllStories/:slug", getAccessToRoute, getAllStories);
+router.get("/getAllStories/:slug", validateSession, getAllStories);
 
 module.exports = router;

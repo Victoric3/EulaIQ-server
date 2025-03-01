@@ -4,13 +4,14 @@ block content
   table(width="100%" border="0" cellpadding="0" cellspacing="0")
     tr
       td(style="padding-bottom: 24px;")
-        h2(style="color: #B18958; margin: 0 0 24px; font-size: 20px;") Account Verification
+        h2(style="color: #B18958; margin: 0 0 24px; font-size: 20px;") Verify Your Account
     tr
       td(style="padding-bottom: 16px;")
-        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Hi #{firstName},
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Hello #{firstName},
     tr
       td(style="padding-bottom: 24px;")
-        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") Your verification code for #{process.env.SITE_NAME}:
+        p(style="color: #2D2D2D; margin: 0; font-size: 16px; line-height: 1.5;") 
+          | Here's your verification code:
     tr
       td(align="center" style="padding: 32px 0;")
         table(cellpadding="0" cellspacing="10" border="0")
@@ -20,4 +21,8 @@ block content
     tr
       td(style="padding-top: 24px;")
         p(style="color: #374151; margin: 0; font-size: 14px; line-height: 1.5;")
-          | Code expires in 20 minutes. Not requested? Ignore this email.
+          | Code expires in 20 minutes.
+          br
+          | Your eulalistic learning adventure awaits!
+          br
+          | If you didn't request this verification, please ignore this email.

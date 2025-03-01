@@ -50,7 +50,7 @@ async function azureOpenai(query, systemInstruction, deployment, imagePaths = []
       `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`,
       {
         messages,
-        temperature: 0.7,
+        temperature: 0.3,
         top_p: 0.95,
         max_tokens: 4000
       },

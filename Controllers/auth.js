@@ -15,6 +15,9 @@ const {
 const crypto = require("crypto");
 const { generateAnonymousId } = require("../Helpers/auth/anonymousHelper");
 const rateLimit = require("express-rate-limit");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 const getPrivateData = (req, res, next) => {
   try {
@@ -122,6 +125,10 @@ const register = async (req, res) => {
       emailStatus: "pending",
       passwordHistory: [password]
     });
+
+    newUser.passwordHistory = newUser.passwordHistory || [];
+    newUser.passwordHistory.push(password);
+    if (newUser.passwordHistory.length > 5) newUser.passwordHistory.shift();
 
     const verificationToken = newUser.createToken();
 
@@ -264,6 +271,7 @@ const forgotpassword = async (req, res) => {
 
 const resetpassword = async (req, res) => {
   const { resetPasswordToken, newPassword } = req.body;
+  console.log(resetPasswordToken, newPassword )
   try {
     if (!resetPasswordToken) {
       return res.status(400).json({
@@ -299,7 +307,7 @@ const resetpassword = async (req, res) => {
 
     // Update password and history
     user.passwordHistory = user.passwordHistory || [];
-    user.passwordHistory.push(user.password);
+    user.passwordHistory.push(newPassword);
     if (user.passwordHistory.length > 5) user.passwordHistory.shift();
 
     user.password = newPassword;
@@ -430,6 +438,99 @@ const resendVerificationToken = catchAsync(async (req, res, next) => {
   }
 });
 
+const googleSignIn = async (req, res) => {
+  try {
+    // console.log("called google signin")
+    const { idToken, deviceInfo, ipAddress } = req.body;
+    // console.log("idToken: ", idToken)
+
+    // Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Find or create user
+    let user = await User.findOne({ 
+      $or: [
+        { email, authProvider: 'google' },
+        { googleId }
+      ]
+    });
+
+    if (user) {
+      // Update existing Google user
+      user.photo = picture || user.photo;
+      user.firstname = name?.split(' ')[0] || user.firstname;
+      user.lastname = name?.split(' ').slice(1).join(' ') || user.lastname;
+      
+      // Add session
+      await user.addSession({
+        token: crypto.createHash('sha256').update(googleId).digest('hex'),
+        device: deviceInfo,
+        ipAddress
+      });
+
+      addIpAddress(user, ipAddress);
+      await user.save();
+      
+      return sendToken(user, 200, req, res, "Welcome back!", deviceInfo);
+    }
+
+    // Check if email exists with password auth
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: 'auth_method_mismatch',
+        errorMessage: 'This email is registered with password authentication. Please sign in with your password.'
+      });
+    }
+
+    // Generate random password for Google users
+    const newPassword = generateAnonymousId();
+
+    // Create new Google user
+    user = await User.create({
+      email,
+      firstname: name?.split(' ')[0] || '',
+      lastname: name?.split(' ').slice(1).join(' ') || '',
+      googleId,
+      photo: picture,
+      ipAddress: [ipAddress],
+      emailStatus: "confirmed",
+      authProvider: 'google',
+      isAnonymous: false,
+      username: await generateUniqueUsername(),
+      password: newPassword,
+      passwordHistory: [newPassword]
+    });
+
+    // Add initial session
+    await user.addSession({
+      token: crypto.createHash('sha256').update(googleId).digest('hex'),
+      device: deviceInfo,
+      ipAddress
+    });
+
+    await user.save();
+
+    // Send welcome email
+    new Email(user).sendWelcome()
+      .catch(err => console.error("Welcome email error:", err));
+
+    return sendToken(user, 201, req, res, "Welcome to EulaIQ!", deviceInfo);
+  } catch (error) {
+    console.error("Google sign in error:", error);
+    return res.status(500).json({
+      status: "failed",
+      errorMessage: "Could not verify Google credentials"
+    });
+  }
+};
+
 const verificationRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
@@ -447,5 +548,6 @@ module.exports = {
   resendVerificationToken,
   unUsualSignIn,
   changeUserName,
-  verificationRateLimit
+  verificationRateLimit,
+  googleSignIn
 };

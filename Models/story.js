@@ -21,16 +21,6 @@ const StorySchema = new mongoose.Schema(
       required: [true, "Please provide a description"],
       minlength: [50, "Please provide a description of at least 50 characters"],
     },
-    content: {
-      type: [String],
-      required: [true, "Please provide content"],
-      default: [],
-    },
-    contentTitle: {
-      type: [Object],
-      required: [true, "Please provide content titles"],
-      default: [],
-    },
     fileUrl: {
       type: String,
       default: "none",
@@ -123,6 +113,36 @@ const StorySchema = new mongoose.Schema(
       type: Number,
       default: 5,
     },
+    pendingContent: {
+      type: String,
+      default: '',
+    },
+    pendingSectionInfo: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    contentTitles: [{
+      title: String,
+      type: String,  // 'head' or 'sub'
+      page: Number
+    }],
+    sections: [{
+      title: String,
+      content: String,
+      type: String,  // 'head' or 'sub'
+      estimatedDuration: Number,
+      complete: Boolean
+    }],
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'complete', 'error'],
+      default: 'pending'
+    },
+    processingError: String,
+    processingProgress: {
+      pagesProcessed: { type: Number, default: 0 },
+      totalPages: { type: Number, default: 0 }
+    }
   },
   { timestamps: true }
 );

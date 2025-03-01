@@ -10,6 +10,7 @@ const {
   confirmEmailAndSignUp,
   resendVerificationToken,
   unUsualSignIn,
+  googleSignIn,
   verificationRateLimit
 } = require("../Controllers/auth");
 
@@ -21,6 +22,7 @@ const router = express.Router();
 
 router.post("/testmail", testmail);
 router.post("/register", register);
+router.post("/googleSignIn", googleSignIn);
 router.post("/resendVerificationToken", verificationRateLimit, resendVerificationToken);
 router.patch("/confirmEmailAndSignUp", confirmEmailAndSignUp);
 router.patch("/unUsualSignIn", unUsualSignIn);

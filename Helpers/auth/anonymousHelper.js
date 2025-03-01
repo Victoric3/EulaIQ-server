@@ -9,7 +9,7 @@ const generateAnonymousId = () => {
 };
 
 const validateDeviceInfo = (deviceInfo) => {
-  if (!deviceInfo || !deviceInfo.deviceId) {
+  if (!deviceInfo || !JSON.parse(deviceInfo)["uniqueIdentifier"]) {
     throw new Error("Invalid device information provided");
   }
   return true;
@@ -47,7 +47,7 @@ const createAnonymousUser = async (ipAddress, deviceInfo) => {
 const getAnonymousSession = async (req, res) => {
   try {
     const { deviceInfo, ipAddress } = req.body;
-    console.log("deviceInfo: ", deviceInfo);
+    console.log("deviceInfo[uniqueIdentifier]: ", deviceInfo["uniqueIdentifier"]);
 
     // Input validation
     if (!deviceInfo) {
@@ -62,7 +62,7 @@ const getAnonymousSession = async (req, res) => {
     // Use lean() for better performance on read operations
     let anonymousUser = await User.findOne({
       isAnonymous: true,
-      "deviceInfo.deviceId": deviceInfo.deviceId,
+      "deviceInfo": deviceInfo,
     });
 
     

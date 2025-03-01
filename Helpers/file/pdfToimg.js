@@ -9,17 +9,21 @@ const { Page } = require('puppeteer');
  * @param {number} pageCount - Number of pages to convert (default 3)
  * @returns {Array} Array of image buffers with page numbers
  */
-const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 2) => {
+const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 1) => {
   try {
-    const pdfDoc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise; 
+    // Convert Buffer to Uint8Array as required by PDF.js
+    const uint8Array = new Uint8Array(pdfBuffer);
+    
+    // Pass the Uint8Array to PDF.js
+    const pdfDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise; 
     const totalPages = pdfDoc.numPages;
     const endPage = Math.min(startPage + pageCount, totalPages - 1);
-    console.log(endPage, startPage, pageCount, totalPages);
+    console.log(`Converting PDF pages ${startPage+1} to ${endPage+1} of ${totalPages}`);
     const newPageCount = endPage - startPage + 1;
     
     const imageBuffers = [];
 
-    for (let pageNum = startPage + 1; pageNum <= endPage + 1; pageNum++) {
+    for (let pageNum = startPage + 1; pageNum < endPage + 1; pageNum++) {
       const page = await pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale: 2.0 });
       
