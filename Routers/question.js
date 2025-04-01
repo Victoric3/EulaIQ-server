@@ -1,16 +1,26 @@
-const express = require("express")
+const express = require("express");
 const router = express.Router();
-const { getQuestion, handleQuestionGeneration, continueQuestionGeneration, fetchExamData } = require('../Controllers/question')
-const authController = require('../Middlewares/Authorization/auth')
 const {
-    handleImageUpload,
-    handleFileUpload,
-  } = require("../Helpers/Libraries/handleUpload");
+  getQuestion,
+  handleQuestionGeneration,
+  continueQuestionGeneration,
+  fetchExamData,
+  getQuestionsByPriority,
+  getEbookQuestionsSummary, 
+  getQuestionGenerationStatus
+} = require("../Controllers/question");
+const { validateSession } = require("../Middlewares/Authorization/auth");
 
-router.get('/getQuestion', authController.getAccessToRoute, authController.apiLimiter, getQuestion)
-router.post('/generateQuestion', authController.getAccessToRoute, handleFileUpload, handleQuestionGeneration)
-router.post('/fetchExamData', authController.getAccessToRoute, fetchExamData)
-router.post('/continueQuestionGeneration', authController.getAccessToRoute, continueQuestionGeneration)
+router.get("/getQuestion", validateSession, getQuestion);
+router.post("/generateQuestion", validateSession, handleQuestionGeneration);
+router.get('/status/:ebookId', validateSession, getQuestionGenerationStatus);
+router.post("/fetchExamData", validateSession, fetchExamData);
+router.post(
+  "/continueQuestionGeneration",
+  validateSession,
+  continueQuestionGeneration
+);
+router.get("/exam/:examId/priority", validateSession, getQuestionsByPriority);
+router.get('/:ebookId', getEbookQuestionsSummary);
 
-
-module.exports = router
+module.exports = router;

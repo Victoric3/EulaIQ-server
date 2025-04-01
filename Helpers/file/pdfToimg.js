@@ -17,7 +17,7 @@ const pdfToImage = async (pdfBuffer, startPage = 0, pageCount = 1) => {
     // Pass the Uint8Array to PDF.js
     const pdfDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise; 
     const totalPages = pdfDoc.numPages;
-    const endPage = Math.min(startPage + pageCount, totalPages - 1);
+    const endPage = Math.min(startPage + pageCount, totalPages);
     console.log(`Converting PDF pages ${startPage+1} to ${endPage+1} of ${totalPages}`);
     const newPageCount = endPage - startPage + 1;
     

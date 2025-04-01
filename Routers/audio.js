@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
+const { validateSession } = require("../Middlewares/Authorization/auth");
 const {
   createAudioCollection,
   createAudio,
@@ -9,40 +9,38 @@ const {
   getAllCollectionsByUser,
   authorizeUserToPlayCollection,
   createAuthorizationTokenForCollection,
-  handleAudioCreation,
+  handleEbookAudioCreation,
   continueAudioCreation
 } = require("../Controllers/audio");
 const {
   handleImageUpload,
-  handleFileUpload,
 } = require("../Helpers/Libraries/handleUpload");
 
 // Routes
 router.post(
   "/audio-collections",
-  getAccessToRoute,
+  validateSession,
   handleImageUpload,
   createAudioCollection
 );
-router.post("/audios", getAccessToRoute, createAudio);
+router.post("/audios", validateSession, createAudio);
 router.get("/audio-collections", getAllCollections);
-router.get("/audiosById", getAccessToRoute, getAudioByCollectionId);
-router.get("/audiosByUser", getAccessToRoute, getAllCollectionsByUser);
-router.post("/authorize", getAccessToRoute, authorizeUserToPlayCollection);
+router.get("/audiosById", validateSession, getAudioByCollectionId);
+router.get("/audiosByUser", validateSession, getAllCollectionsByUser);
+router.post("/authorize", validateSession, authorizeUserToPlayCollection);
 router.post(
   "/authorization-token",
-  getAccessToRoute,
+  validateSession,
   createAuthorizationTokenForCollection
 );
 router.post(
   "/generateAudio",
-  getAccessToRoute,
-  handleFileUpload,
-  handleAudioCreation
+  validateSession,
+  handleEbookAudioCreation
 );
 router.post(
   "/continueAudioGeneration",
-  getAccessToRoute,
+  validateSession,
   continueAudioCreation
 );
 

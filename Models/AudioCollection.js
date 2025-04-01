@@ -13,6 +13,10 @@ const audioCollectionSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  userQuery: {
+    type: String,
+    default: "",
+  },
   audios: {
     type: [Object],
     default: [],
@@ -71,6 +75,23 @@ const audioCollectionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  associatedEbook: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Story'
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'processing', 'complete', 'error'],
+    default: 'pending'
+  },
+  progress: {
+    type: Number,
+    default: 0
+  },
+  processingStatus: String,
+  startTime: Date,
+  endTime: Date,
+  error: String
 });
 
 // Create the audio model

@@ -86,10 +86,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  audioCollections: {
-    type: [Object],
-    default: []
-  },
+  likes: [{
+    type: mongoose.Schema.ObjectId,
+    ref: "Story"
+  }],
   preferences: {
     type: [Object],
     default: []
@@ -170,8 +170,8 @@ UserSchema.methods.generateJwtFromUser = function () {
 
   return token
 }
-  
-  UserSchema.methods.getResetPasswordTokenFromUser = function () {
+
+UserSchema.methods.getResetPasswordTokenFromUser = function () {
 
   const randomHexString = crypto.randomBytes(20).toString("hex")
 
@@ -193,7 +193,7 @@ UserSchema.methods.createToken = function () {
   return verificationToken
 }
 
-// Add password history methods
+// Add password history method
 UserSchema.methods.isPasswordPreviouslyUsed = async function (newPassword) {
   const user = await this.model('User').findById(this._id).select('+passwordHistory');
   if (!user.passwordHistory) return false;
@@ -225,14 +225,24 @@ UserSchema.methods.addSession = async function (sessionData) {
 
   // Check max sessions
   if (this.sessions.length >= this.maxSessions) {
-    this.sessions.shift(); // Remove oldest session
-    this.validTokens.shift(); // Remove oldest validToken
+    // Find the oldest session
+    const oldestSession = this.sessions[0];
+    const oldestToken = oldestSession.token;
+    
+    // Remove the oldest session
+    this.sessions.shift();
+    
+    // Find and remove the matching token from validTokens
+    const tokenIndex = this.validTokens.findIndex(token => token === oldestToken);
+    if (tokenIndex !== -1) {
+      this.validTokens.splice(tokenIndex, 1);
+    }
   }
 
   this.sessions.push({
     ...sessionData,
     lastActive: new Date(),
-    expiresAt: new Date(now + 24 * 60 * 60 * 1000) // 24 hours
+    expiresAt: new Date(now + 30 * 24 * 60 * 60 * 1000) // 60 days
   });
 };
 

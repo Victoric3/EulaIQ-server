@@ -1,4 +1,4 @@
-const { BlobServiceClient } = require('@azure/storage-blob');
+const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs-extra');
 const axios = require('axios');
@@ -100,23 +100,67 @@ const uploadImagesToAzure = async (tempFilePaths) => {
   }
 };
 
+const getBlobName = (fileUrl) => {
+  const urlObj = new URL(fileUrl);
+  return decodeURIComponent(basename(urlObj.pathname)); // Extracts only the file name
+};
+
+
+const accountName = process.env.ACCOUNT_NAME;
+const accountKey = process.env.ACCOUNT_KEY;
+const containerName = process.env.CONTAINER_FILE_NAME;
+
+// Create SAS token function
+const generateSasToken = async (blobName) => {
+  const credential = new StorageSharedKeyCredential(accountName, accountKey);
+  const blobServiceClient = new BlobServiceClient(
+    `https://${accountName}.blob.core.windows.net`,
+    credential
+  );
+
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blobClient = containerClient.getBlobClient(blobName);
+
+  // Generate SAS token (valid for 1 hour)
+  const expiryDate = new Date();
+  expiryDate.setHours(expiryDate.getHours() + 1);
+
+  const sasToken = await blobClient.generateSasUrl({
+    permissions: "r", // Read access
+    expiresOn: expiryDate,
+  });
+
+  console.log("sasToken: ", sasToken)
+
+  return sasToken.split("?")[1]; // Return only the SAS query string
+};
+
+
 const fetchSavedFile = async (fileUrl) => {
   try {
+
     console.log("fileUrl: ", fileUrl);
-    // Make a GET request to the blob URL
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+    const blobName = getBlobName(fileUrl); // Extract blob name from URL
+
+    const sasToken = await generateSasToken(blobName); // Get a new SAS token
+
+    console.log("sasToken: ", sasToken);
+    console.log("blobName: ", blobName);
+    
+    
+    // Append SAS token to the URL
+    const sasUrl = `${fileUrl}?${sasToken}`;
+    console.log("sasUrl: ", sasUrl);
+
+    // Make a GET request to the blob URL with SAS token
+    const response = await axios.get(sasUrl, { responseType: "arraybuffer" });
 
     // Retrieve relevant headers and file data
-    const contentType = response.headers['content-type'];
-    const contentLength = response.headers['content-length'];
+    const contentType = response.headers["content-type"];
+    const contentLength = response.headers["content-length"];
 
-    // Decode the URL and extract the blob name
-    const urlObj = new URL(fileUrl);
-    const blobName = basename(urlObj.pathname); // e.g., "49bed3f5-1db7-400a-b7b2-fd5f13fad83f-COS 304-Summary b.pdf"
-    
-    // Assuming the blob name is in the format "uuid-originalFileName",
-    // find the first dash and extract the original file name.
-    const dashIndex = blobName.indexOf('-');
+    // Extract original file name from blob name
+    const dashIndex = blobName.indexOf("-");
     const originalName = dashIndex !== -1 ? blobName.slice(dashIndex + 1) : blobName;
 
     return {
@@ -127,17 +171,91 @@ const fetchSavedFile = async (fileUrl) => {
         contentLength,
         originalname: originalName,
       },
-      message: "File retrieved successfully"
+      message: "File retrieved successfully",
     };
   } catch (error) {
-    console.error('Error fetching file from Azure:', error);
+    console.error("Error fetching file from Azure:", error);
     throw new Error(`Failed to fetch file: ${error.message}`);
   }
 };
 
+const deleteFileFromAzure = async (fileUrl) => {
+  try {
+    if (!fileUrl) {
+      return { status: "warning", message: "No file URL provided" };
+    }
+
+    // Get connection string from environment variables
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const containerName = process.env.CONTAINER_FILE_NAME;
+
+    if (!connectionString || !containerName) {
+      throw new Error('Azure Storage credentials not configured properly');
+    }
+
+    // Create BlobServiceClient using the connection string
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+
+    // Get container client
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    // Get blob name from URL
+    const blobName = getBlobName(fileUrl);
+
+    // Get blob client and delete the blob
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.delete();
+
+    return { status: "success", message: "File deleted successfully from Azure" };
+  } catch (error) {
+    console.error('Error deleting file from Azure:', error);
+    throw new Error(`Failed to delete file: ${error.message}`);
+  }
+};
+
+module.exports = { 
+  saveFileAndAddLinkToEbook, 
+  uploadImagesToAzure, 
+  fetchSavedFile,
+  deleteFileFromAzure
+};
+
+// const fetchSavedFile = async (fileUrl) => {
+//   try {
+//     console.log("fileUrl: ", fileUrl);
+//     // Make a GET request to the blob URL
+//     const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+
+//     // Retrieve relevant headers and file data
+//     const contentType = response.headers['content-type'];
+//     const contentLength = response.headers['content-length'];
+
+//     // Decode the URL and extract the blob name
+//     const urlObj = new URL(fileUrl);
+//     const blobName = basename(urlObj.pathname); // e.g., "49bed3f5-1db7-400a-b7b2-fd5f13fad83f-COS 304-Summary b.pdf"
+    
+//     // Assuming the blob name is in the format "uuid-originalFileName",
+//     // find the first dash and extract the original file name.
+//     const dashIndex = blobName.indexOf('-');
+//     const originalName = dashIndex !== -1 ? blobName.slice(dashIndex + 1) : blobName;
+
+//     return {
+//       status: "success",
+//       file: {
+//         buffer: response.data,
+//         contentType,
+//         contentLength,
+//         originalname: originalName,
+//       },
+//       message: "File retrieved successfully"
+//     };
+//   } catch (error) {
+//     console.error('Error fetching file from Azure:', error);
+//     throw new Error(`Failed to fetch file: ${error.message}`);
+//   }
+// };
 
 
-module.exports = { saveFileAndAddLinkToEbook, uploadImagesToAzure, fetchSavedFile};
 
 // const path = require('path');
 // const axios = require('axios');

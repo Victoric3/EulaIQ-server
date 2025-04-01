@@ -28,22 +28,17 @@ const CommentSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    star: {
-        type: Number,
-        default: 0
-    },
+    // Removed star field as ratings are now handled separately
     parentComment: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Comment',
         default: null,
-      },
-      replies: [{
+    },
+    replies: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Comment',
-      }]
-
+    }]
 }, { timestamps: true })
-
 
 const Comment = mongoose.model("Comment", CommentSchema)
 

@@ -1,24 +1,27 @@
 const express = require("express")
 
 
-const {profile,editProfile,changePassword,addStoryToReadList,readListPage} = require("../Controllers/user");
-const { getAccessToRoute } = require("../Middlewares/Authorization/auth");
+const { profile, editProfile, changePassword, addStoryToReadList, readListPage, checkStoryInReadList, getLikedStoriesPage } = require("../Controllers/user");
+const { validateSession } = require("../Middlewares/Authorization/auth");
 const { handleImageUpload } = require("../Helpers/Libraries/handleUpload");
 
 
 
 const router = express.Router();
 
-router.get("/profile",getAccessToRoute ,profile)
+router.get("/profile", validateSession, profile)
 
-router.post("/editProfile",[getAccessToRoute, handleImageUpload] ,editProfile) //image
+router.post("/editProfile", [validateSession, handleImageUpload], editProfile) //image
 
-router.put("/changePassword",getAccessToRoute,changePassword)
+router.put("/changePassword", validateSession, changePassword)
 
-router.post("/:slug/addStoryToReadList",getAccessToRoute ,addStoryToReadList)
+router.post("/:ebookId/addStoryToReadList", validateSession, addStoryToReadList)
 
-router.get("/readList",getAccessToRoute ,readListPage)
+router.get("/readList", validateSession, readListPage)
 
+router.get("/readList/check/:ebookId", validateSession, checkStoryInReadList);
+
+router.get("/favorites", validateSession, getLikedStoriesPage);
 
 
 module.exports = router

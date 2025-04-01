@@ -33,6 +33,19 @@ const audioSchema = new mongoose.Schema({
     type: String,
     default: "default voice",
   },
+  type: {
+    type: String,
+    default: "head",
+  },
+  segments: {
+    type: [{
+      url: String,
+      voice: String, 
+      duration: Number,
+      text: String
+    }],
+    default: []
+  }
 });
 
 // Create the audio model

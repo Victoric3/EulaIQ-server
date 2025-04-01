@@ -500,6 +500,7 @@ const googleSignIn = async (req, res) => {
       googleId,
       photo: picture,
       ipAddress: [ipAddress],
+      deviceInfo: [deviceInfo],
       emailStatus: "confirmed",
       authProvider: 'google',
       isAnonymous: false,

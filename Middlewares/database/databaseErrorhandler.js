@@ -5,7 +5,7 @@ const Story = require("../../Models/story")
 
 const checkStoryExist = asyncErrorWrapper(async (req,res,next) => {
   
-    const {slug} = req.params  ;
+    const {slug} = req.params;
     const story = await Story.findOne({
       slug : slug
     })

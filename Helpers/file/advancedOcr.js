@@ -12,6 +12,7 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
     let pendingSectionInfo = ebook.pendingSectionInfo || null;
     let allSections = [];
     let allTitles = [];
+    let bookDescription = null;
     
     for (let i = 0; i < tempFilePaths.length; i++) {
       const pageNumber = currentPage + i + 1;
@@ -24,16 +25,56 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
         continue;
       }
       
+      // Special case for first page - request book description
+      const isFirstPage = pageNumber === 1;
+      
       const result = await processPage(
         pageNumber,
         extractedText[0].extractedTexts,
         tempFilePaths[i],
-        pendingSectionInfo
+        pendingSectionInfo,
+        isFirstPage // Pass flag to indicate first page
       );
+
+      console.log("result: ", result);
+      
+      // If first page and description was generated, save it
+      if (isFirstPage && result.bookDescription) {
+        bookDescription = result.bookDescription;
+        console.log("Generated book description:", bookDescription);
+        
+        // Update ebook description if not already set or if default
+        if (!ebook.description || ebook.description.length < 60) {
+          ebook.description = bookDescription;
+          await ebook.save();
+          console.log("Book description saved to ebook record");
+        }
+      }
+      
+      // Add to start of performOCR function, after result is received:
+      console.log(`Page ${pageNumber} result structure check:`, {
+        hasMetadata: !!result.metadata,
+        hasSections: Array.isArray(result.sections),
+        sectionsCount: result.sections?.length || 0
+      });
+
+      // Add a safety check to make property paths more resilient:
+      if (!result.metadata) {
+        // Create default metadata if completely missing
+        result.metadata = {
+          continuesPreviousSection: false,
+          endsWithIncompleteSection: false,
+          page: pageNumber
+        };
+      }
       
       // Handle section continuity
-      if (i === 0 && result.sectionInfo.continuesPreviousSection && pendingContent) {
-        result.text = pendingContent + result.text;
+      if (i === 0 && result.metadata?.continuesPreviousSection && pendingContent) {
+        // Since we now get structured sections instead of raw text,
+        // we need to modify the first section's content instead of result.text
+        if (result.sections && result.sections.length > 0) {
+          result.sections[0].content = pendingContent + result.sections[0].content;
+        }
       }
       
       // Extract complete sections
@@ -100,9 +141,20 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
 }
 
 // Dedicated page processor
-async function processPage(pageNumber, extractedText, imagePath, previousSectionInfo) {
+async function processPage(pageNumber, extractedText, imagePath, previousSectionInfo, requestDescription = false) {
+  // Modify the prompt when requesting description
+  const descriptionRequest = requestDescription ? `
+**Additional Task (FIRST PAGE ONLY)**:
+Generate a concise description of this document (150-200 words) that:
+- Summarizes the main topic and purpose of the document
+- Mentions the intended audience and key subject areas
+- Provides context about the document's significance
+- Is informative and educational in tone
+- Is at least 100 words in length
+` : '';
+
   const query = `  
-[OCR ENHANCEMENT WITH SECTION STRUCTURING]
+[OCR ENHANCEMENT WITH STRUCTURED JSON OUTPUT]
 
 **OCR Input (Raw Text, Page ${pageNumber}):**
 ${extractedText}
@@ -110,50 +162,120 @@ ${extractedText}
 **Previous Section Info:**
 ${previousSectionInfo ? JSON.stringify(previousSectionInfo) : "None"}
 
+${descriptionRequest}
+
 **Your Critical Tasks:**
 
-1. FIX CONTENT FORMATTING:
-   - Correct OCR errors and improve formatting
-   - Maintain all technical terminology exactly as written
+1. ENHANCE TEXT QUALITY:
+   - Correct OCR errors while preserving technical terminology
+   - Maintain proper paragraph structure and logical flow
+   - Preserve tables, lists, and formatting
 
-2. IDENTIFY TRUE CONTENT SECTIONS:
-   - Each section MUST have a meaningful title from the actual content
-   - DO NOT use generic phrases or metadata as titles, including:
-     * Headers/footers (e.g., "Compiled by...", "Prepared by...")
-     * Page numbers, dates, or document IDs
-     * Watermarks, logos, or publication information
-   - DO NOT create sections without clear subject-matter titles
-   - Mark section boundaries with <section-break> tags BETWEEN sections only
-   - NEVER use <section-break> at the beginning or end of the document
-   - NEVER create empty sections or double section breaks
+2. RECONSTRUCT MISSING CONTENT:
+   - EXAMINE THE IMAGE CAREFULLY for tables, charts, and diagrams
+   - If the OCR text is missing tables visible in the image, RECREATE THEM completely
+   - If tables are malformed or broken in the OCR text, fix them using the image
+   - Do not omit ANY visible content from the image
 
-3. DETECT TITLE HIERARCHY:
-   - Head: Main topics with distinct subject matter (e.g., "Treatment Options", "Disease Pathophysiology")
-   - Sub: Subtopics that elaborate on a head topic
-   - USE ONLY ACTUAL CONTENT HEADINGS from the document, not descriptive placeholders
+3. CREATE STRUCTURED SECTIONS:
+   - Identify meaningful content divisions with clear titles
+   - Each section must have exactly ONE corresponding title from the document
+   - Distinguish between main topics ("head") and subtopics ("sub")
+   - Use actual headings from the document, not descriptive placeholders
 
-**Output Format:**
+4. FORMAT WITH HTML:
+   - Use <h1>/<h2> tags for headings
+   - Use <p> tags for paragraphs
+   - Use <table>, <tr>, <td>, <th> tags for ALL tables
+   - Use <strong>, <em> tags for emphasis
+   - Content should be properly nested and valid HTML
+   - Include captions for tables using <caption> tags
+
+**Visual Content Processing Instructions:**
+When you see a table in the image:
+1. Create proper HTML tables with <table>, <tr>, <td>, and <th> tags
+2. Include ALL columns and rows visible in the image
+3. Preserve column headers and row labels exactly as they appear
+4. Maintain data alignment (left, center, right) as in the original
+5. Include table captions if present
+
+When you see non-textual images (diagrams, illustrations, photos):
+1. DESCRIBE THE IMAGE in educational, detailed terms
+2. Focus on medical/scientific relevance to the surrounding content
+3. Include 3-5 sentences with key details visible in the image
+4. Wrap descriptions in
+<div class="figure-reference" data-page="4">
+  <p class="figure-description">This image shows two artistic representations of Aristotle...</p>
+</div>
+5. Place the description at the exact position the image appears in the content
+
+For example, if you see a heart diagram:
+<div class="figure-reference" data-page="${pageNumber}">
+  <p class="figure-description">
+This anatomical illustration shows the human heart with labeled chambers. The four chambers (right atrium, right ventricle, left atrium, and left ventricle) are clearly distinguished by color. Major blood vessels including the aorta, superior vena cava, and pulmonary arteries are labeled. The image demonstrates blood flow through the heart with directional arrows indicating oxygenated and deoxygenated blood pathways.
+</p>
+</div>
+
+CREATE FLUTTER-COMPATIBLE TABLES:
+  * Use simple <table width="100%"> structure
+  * Ensure consistent column count in all rows
+  * Use only basic <tr>, <th>, and <td> elements
+  * Avoid rowspan, colspan, and complex nesting
+  * Do not use custom CSS styles or attributes
+
+**Output Format - VALID JSON:**
 {
-  "text": "<p>Properly formatted HTML content with section breaks BETWEEN sections</p>",
-  "contentTitles": [
-    {"title": "Exact Section Title", "type": "head|sub", "page": ${pageNumber}}
-  ],
-  "sectionInfo": {
-    "continuesPreviousSection": true|false, 
+  "sections": [
+    {
+      "title": "Section Title",
+      "content": "<h2>Section Title</h2><p>Section content with proper HTML</p>",
+      "type": "head|sub",
+      "complete": true
+    },
+    {
+      "title": "Another Section",
+      "content": "<h2>Another Section</h2><p>More content...</p>",
+      "type": "head|sub",
+      "complete": true
+    }
+  ],${requestDescription ? `
+  "bookDescription": "A comprehensive description of the document covering its main topics, intended audience, and significance...",` : ''}
+  "metadata": {
+    "continuesPreviousSection": true|false,
     "endsWithIncompleteSection": true|false
   }
-}`;
+}
+   CRITICAL OUTPUT REQUIREMENTS:
+1. DO NOT REPEAT PREVIOUS CONTENT: NEVER include content from "Previous Section Info" - this will be merged programmatically
+2. ONE-TO-ONE MAPPING: Each section MUST have exactly ONE title from the document
+3. COMPLETE CONTENT: Include ALL content visible in the current image
+4. PROPER HTML: Use appropriate tags (<h1>/<h2>, <p>, <table>, etc.)
+5. SECTION INTEGRITY: Each section must be meaningful and substantial
+6. JSON VALIDITY: Output must be valid, parseable JSON
+
+NOTE: For continuing sections, start from where the previous section ended. The system will handle the merging automatically.`;
 
   const systemInstruction = `
-  You are an AI document processor specializing in academic and technical content structuring.
+  You are an AI document processor specializing in structured content extraction with expertise in tables and diagrams.
   
   CRITICAL REQUIREMENTS:
-  1. Use <section-break> ONLY between true content sections, never at beginning/end
-  2. Never create sections without meaningful titles that relate to the actual subject matter
-  3. FILTER OUT metadata, headers/footers, publication info, or phrases like "compiled by..."
-  4. Identify REAL content structure based on the actual subject hierarchy
-  5. Every section MUST correspond to an actual content heading in the document
-  6. Avoid creating sections from decorative text, page markers, or non-content elements
+  1. Output valid JSON with properly formatted sections
+  2. Extract meaningful section titles from the actual document
+  3. Exclude headers, footers, page numbers, and metadata
+  4. Maintain all technical terminology exactly as written
+  5. Preserve and reconstruct all tables, diagrams, and structured content visible in the image
+  6. Fill in any content that OCR missed by carefully examining the image
+  7. Include ALL content in the output - nothing should be lost
+  
+  When you receive a document image with tables or diagrams:
+  - ALWAYS check if the OCR text accurately captured all tabular content
+  - If tables are missing or malformed, reconstruct them completely using HTML tags
+  - Follow proper accessibility standards for table HTML markup
+
+    When you receive a document image containing non-textual elements:
+  - For illustrations, photos, and non-textual diagrams: create detailed textual descriptions
+  - Wrap image descriptions in <image data-page="$pageNumber"></image> tags
+  - Make descriptions educational and contextually relevant to the subject matter
   `;
 
   try {
@@ -165,7 +287,12 @@ ${previousSectionInfo ? JSON.stringify(previousSectionInfo) : "None"}
     );
 
     const result = extractAndParseJSON(response);
-
+    
+    // Add page number to metadata
+    if (result && result.metadata) {
+      result.metadata.page = pageNumber;
+    }
+    
     return result;
 
   } catch (error) {
@@ -175,73 +302,63 @@ ${previousSectionInfo ? JSON.stringify(previousSectionInfo) : "None"}
 }
 
 function extractCompleteSections(pageResult) {
-  // Clean up malformed section breaks
-  const cleanedText = pageResult.text
-    .replace(/<section-break>\s*<section-break>/g, '<section-break>') // Remove double breaks
-    .replace(/^\s*<section-break>\s*/g, '') // Remove break at start
-    .replace(/\s*<section-break>\s*$/g, ''); // Remove break at end
-  
-  // Split by section breaks
-  const sectionTexts = cleanedText.split('<section-break>')
-    .map(text => text.trim())
-    .filter(text => text.length > 0);
-  
+  if (!pageResult || !pageResult.sections || !Array.isArray(pageResult.sections)) {
+    console.warn('Invalid page result format - missing sections array');
+    return { completeSections: [], incompleteFinal: null };
+  }
+
   const completeSections = [];
   let incompleteFinal = null;
   
   // Process each section
-  sectionTexts.forEach((sectionText, index) => {
-    const isLast = index === sectionTexts.length - 1;
-    const isComplete = !isLast || !pageResult.sectionInfo.endsWithIncompleteSection;
+  pageResult.sections.forEach((section, index) => {
+    const isLast = index === pageResult.sections.length - 1;
     
-    // Find the best title for this section
-    const sectionTitle = findSectionTitle(sectionText, pageResult.contentTitles);
+    // Last section might be incomplete if the page result indicates so
+    const isComplete = !isLast || !pageResult.metadata.endsWithIncompleteSection;
     
-    // Skip untitled sections unless they're continuations
-    if (!sectionTitle && !(index === 0 && pageResult.sectionInfo.continuesPreviousSection)) {
-      console.log("Skipping section without title");
-      return;
-    }
-    
-    // Create section object with explicit type matching Story schema
-    const section = {
-      content: sectionText,
-      title: sectionTitle?.title || null,
-      type: sectionTitle?.type || 'head', // Default to 'head' if no type specified
-      estimatedDuration: estimateContentDuration(sectionText),
+    // Create a proper section object with schema fields
+    const processedSection = {
+      content: section.content,
+      title: section.title,
+      type: section.type === 'sub' ? 'sub' : 'head', // Default to 'head' if not 'sub'
+      estimatedDuration: estimateContentDuration(section.content),
       complete: isComplete
     };
     
-    // Validate section type
-    if (section.type && !['head', 'sub'].includes(section.type)) {
-      console.warn(`Invalid section type "${section.type}" for title "${section.title}", defaulting to "head"`);
-      section.type = 'head';
-    }
-
+    // Add to proper collection based on completeness
     if (isComplete) {
-      completeSections.push(section);
+      completeSections.push(processedSection);
     } else {
       incompleteFinal = {
-        content: sectionText,
+        content: section.content,
         sectionInfo: {
-          ...pageResult.sectionInfo,
-          incompleteSection: section
+          ...pageResult.metadata,  // Correct property name
+          incompleteSection: processedSection
         }
       };
     }
   });
   
+  // Extract content titles from sections for backward compatibility
+  pageResult.contentTitles = pageResult.sections.map((section, index) => ({
+    title: section.title,
+    type: section.type,
+    page: pageResult.metadata?.page || 0
+  }));
+  
   return { completeSections, incompleteFinal };
 }
 
 function updateTableOfContents(ebook, newTitles) {
-  // Initialize if needed
   if (!ebook.contentTitles) {
     ebook.contentTitles = [];
   }
   
   // Filter out problematic titles before processing
   const filteredTitles = newTitles.filter(title => {
+    if (!title || !title.title) return false;
+    
     // Skip placeholder/metadata titles
     const lowerTitle = title.title.toLowerCase();
     if (lowerTitle.includes("compiled by") || 
@@ -256,10 +373,13 @@ function updateTableOfContents(ebook, newTitles) {
     return true;
   });
   
-  // Add new titles without duplicates
+  // Add new titles without duplicates using normalized comparison
   for (const title of filteredTitles) {
-    // Check if this title already exists
-    const exists = ebook.contentTitles.some(t => t.title === title.title);
+    const normalizedTitle = title.title.toLowerCase().trim();
+    const exists = ebook.contentTitles.some(t => 
+      t.title.toLowerCase().trim() === normalizedTitle
+    );
+    
     if (!exists) {
       ebook.contentTitles.push({
         title: title.title,
@@ -269,7 +389,7 @@ function updateTableOfContents(ebook, newTitles) {
     }
   }
   
-  console.log(`Content titles updated: ${filteredTitles.length} new titles added`);
+  console.log(`Content titles updated: ${filteredTitles.length} filtered titles processed`);
 }
 
 function estimateContentDuration(text) {
@@ -282,59 +402,10 @@ function estimateContentDuration(text) {
   return Math.min(Math.max(estimatedMinutes, 3), 12);
 }
 
-/**
- * Finds the most appropriate title for a given section text from available contentTitles
- * @param {string} sectionText - The text content of the section
- * @param {Array} contentTitles - Array of title objects with title, type and page properties
- * @returns {Object|null} - The matching title object or null if no match found
- */
-function findSectionTitle(sectionText, contentTitles) {
-  if (!contentTitles || !contentTitles.length || !sectionText) {
-    return null;
-  }
-  
-  // First few paragraphs are most likely to contain the title
-  const firstParagraphs = sectionText.split('</p>').slice(0, 3).join('</p>');
-  
-  // Try to find exact match first (highest priority)
-  for (const titleObj of contentTitles) {
-    if (firstParagraphs.includes(titleObj.title)) {
-      return titleObj;
-    }
-  }
-  
-  // If no exact match, try case-insensitive match
-  for (const titleObj of contentTitles) {
-    if (firstParagraphs.toLowerCase().includes(titleObj.title.toLowerCase())) {
-      return titleObj;
-    }
-  }
-  
-  // Still no match, check if any title is at least partially included
-  // (useful for cases where title might be slightly different due to OCR errors)
-  for (const titleObj of contentTitles) {
-    const titleWords = titleObj.title.toLowerCase().split(/\s+/);
-    // If title has multiple words, check if most words are present
-    if (titleWords.length > 1) {
-      const matchCount = titleWords.filter(word => 
-        word.length > 3 && firstParagraphs.toLowerCase().includes(word)
-      ).length;
-      
-      // If more than 70% of significant words match, return this title
-      if (matchCount >= Math.ceil(titleWords.length * 0.7)) {
-        return titleObj;
-      }
-    }
-  }
-  
-  // No appropriate match found
-  return null;
-}
 
 module.exports = { 
   performOCR,
   extractCompleteSections,
   updateTableOfContents,
-  findSectionTitle,
   estimateContentDuration
 };

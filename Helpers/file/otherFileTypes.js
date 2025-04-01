@@ -1,6 +1,7 @@
 const Papa = require("papaparse");
 const fs = require("fs-extra");
 const { extractPdfContent } = require("./extractPdf");
+const { convertPptxToPdfBuffer } = require("./pptxToPdf");
 const path = require('path');
 
 /**
