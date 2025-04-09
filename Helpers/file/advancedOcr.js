@@ -9,6 +9,7 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
     
     // Process one image at a time to reduce memory usage
     let pendingContent = ebook.pendingContent || "";
+    let sectionTitles = ebook.contentTitles || [];
     let pendingSectionInfo = ebook.pendingSectionInfo || null;
     let allSections = [];
     let allTitles = [];
@@ -33,7 +34,8 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
         extractedText[0].extractedTexts,
         tempFilePaths[i],
         pendingSectionInfo,
-        isFirstPage // Pass flag to indicate first page
+        isFirstPage,
+        sectionTitles
       );
 
       console.log("result: ", result);
@@ -141,7 +143,7 @@ async function performOCR(currentPage, ebook, tempFilePaths, totalPages) {
 }
 
 // Dedicated page processor
-async function processPage(pageNumber, extractedText, imagePath, previousSectionInfo, requestDescription = false) {
+async function processPage(pageNumber, extractedText, imagePath, previousSectionInfo, requestDescription = false, sectionTitles = []) {
   // Modify the prompt when requesting description
   const descriptionRequest = requestDescription ? `
 **Additional Task (FIRST PAGE ONLY)**:
@@ -182,6 +184,7 @@ ${descriptionRequest}
    - Each section must have exactly ONE corresponding title from the document
    - Distinguish between main topics ("head") and subtopics ("sub")
    - Use actual headings from the document, not descriptive placeholders
+   - Ensure the section titles are unique, here are the previous section Titles: ${sectionTitles}
 
 4. FORMAT WITH HTML:
    - Use <h1>/<h2> tags for headings

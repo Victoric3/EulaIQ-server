@@ -1,16 +1,31 @@
 const Story = require('../Models/story');
 const { deleteFileFromAzure } = require('../Helpers/file/saveFile');
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
+
+// Load ebook covers from JSON file
+const ebookCoversPath = path.join(__dirname, '..', 'data', 'ebookCovers.json');
+const ebookCovers = JSON.parse(fs.readFileSync(ebookCoversPath, 'utf8'));
+const coverKeys = Object.keys(ebookCovers);
 
 const createEbook = async (req, file) => {
   console.log("started creating ebook");
   try {
+    // Select a random cover image from the available covers
+    const randomIndex = Math.floor(Math.random() * coverKeys.length);
+    const randomCoverKey = coverKeys[randomIndex];
+    const coverImageUrl = ebookCovers[randomCoverKey];
+    
+    console.log(`Selected random cover: ${randomCoverKey}`);
+
     const story = new Story({
       title: file.originalname.replace(/\.[^/.]+$/, ""),
       author: req.user._id,
-      image: req.user.photo,
+      image: coverImageUrl || req.user.photo,
       status: "processing",
       description: "This story is being processed. Please check back later.",
+      coverKey: randomCoverKey, // Optionally store which cover was selected
     });
 
     await story.save();

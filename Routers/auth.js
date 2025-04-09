@@ -11,7 +11,9 @@ const {
   resendVerificationToken,
   unUsualSignIn,
   googleSignIn,
-  verificationRateLimit
+  verificationRateLimit,
+  changeUserName,
+  signOut
 } = require("../Controllers/auth");
 
 const { anonymousRateLimit, getAnonymousSession } = require("../Helpers/auth/anonymousHelper");
@@ -36,5 +38,8 @@ router.put("/resetpassword", resetpassword);
 
 router.get("/private", validateSession, getPrivateData);
 
+router.post("/changeUserName", validateSession, changeUserName);
+
+router.post("/signout", validateSession, signOut);
 
 module.exports = router;

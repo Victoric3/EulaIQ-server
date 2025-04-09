@@ -13,7 +13,8 @@ const {
   editStoryPage,
   getUserEbooks,
   getEbookSectionsCount,
-  getEbookSections
+  getEbookSections,
+  getEbookSectionTitles
 } = require("../Controllers/story");
 const { handleImageUpload, handleFileUpload } = require("../Helpers/Libraries/handleUpload");
 const { 
@@ -60,6 +61,7 @@ router.get("/:slug", validateSession, detailStory);
 router.get("/getAllStories/:slug", validateSession, getAllStories);
 router.get("/:ebookId/sections", validateSession, getEbookSections);
 router.get("/:ebookId/sections-count", validateSession, getEbookSectionsCount);
+router.get("/:ebookId/sectionTitles", validateSession, getEbookSectionTitles);
 router.post("/foruser", validateSession, getUserEbooks);
 
 //generate ebook

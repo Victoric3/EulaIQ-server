@@ -1,4 +1,3 @@
-const asyncErrorWrapper = require("express-async-handler");
 const User = require("../Models/user");
 const { sendToken } = require("../Helpers/auth/tokenHelpers");
 const Email = require("../Helpers/Libraries/email");
@@ -8,6 +7,7 @@ const {
   addIpAddress,
   checkIpAddressChange,
 } = require("../Helpers/auth/deviceChange");
+const { getAccessTokenFromCookies } = require("../Helpers/auth/tokenHelpers");
 // const { createNotification } = require("./notification");
 const {
   generateUniqueUsername,
@@ -206,6 +206,7 @@ const login = async (req, res) => {
 };
 
 const changeUserName = async (req, res) => {
+  console.log("changeUserName called")
   const { newUsername } = req.body;
   let user = req.user;
   try {
@@ -532,6 +533,52 @@ const googleSignIn = async (req, res) => {
   }
 };
 
+const signOut = async (req, res) => {
+  try {
+    // Get user from request (already set by validateSession middleware)
+    const user = req.user;
+    
+    // Get token from cookie (same way validateSession gets it)
+    const token = getAccessTokenFromCookies(req);
+    
+    if (!token) {
+      return res.status(400).json({
+        status: "failed",
+        errorMessage: "No authentication token provided"
+      });
+    }
+    
+    // Hash the token to match what's stored in the database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    
+    // Remove this specific session from the sessions array
+    user.sessions = user.sessions.filter(session => session.token !== hashedToken);
+    
+    // Remove the token from validTokens array
+    user.validTokens = user.validTokens.filter(validToken => validToken !== hashedToken);
+    
+    await user.save();
+    
+    // Clear auth cookie
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict"
+    });
+    
+    return res.status(200).json({
+      status: "success",
+      message: "Successfully signed out"
+    });
+  } catch (error) {
+    console.error("Sign out error:", error);
+    return res.status(500).json({
+      status: "failed",
+      errorMessage: "Internal server error"
+    });
+  }
+};
+
 const verificationRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
@@ -550,5 +597,6 @@ module.exports = {
   unUsualSignIn,
   changeUserName,
   verificationRateLimit,
-  googleSignIn
+  googleSignIn,
+  signOut
 };

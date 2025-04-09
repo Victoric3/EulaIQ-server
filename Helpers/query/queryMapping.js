@@ -1,3 +1,109 @@
+const hooks = {
+    // Type 1: Surprising Facts
+    surprisingFacts: [
+        "Did you know the average person will spend six months of their life waiting at red lights?",
+        "Did you know your brain's storage capacity is considered virtually unlimited?",
+        "Did you know we share 50% of our DNA with bananas?",
+        "Did you know the world's largest desert isn't the Sahara—it's Antarctica?",
+        "Did you know your smartphone has more computing power than NASA used to put humans on the moon?"
+    ],
+    
+    // Type 2: Thought-Provoking Questions
+    thoughtQuestions: [
+        "What if everything you believe about success is completely wrong?",
+        "How would your life change if you knew exactly when you would die?",
+        "What parts of your identity were chosen for you, not by you?",
+        "If you could preserve only one memory forever, which would you choose?",
+        "What makes something true, when our understanding changes every decade?"
+    ],
+    
+    // Type 3: Bold Statements
+    boldStatements: [
+        "In 1952, a housewife's headache led to a discovery that would save millions of lives.",
+        "Your morning coffee ritual exists because of a 13th-century goat herder's observation.",
+        "A single equation written in 1905 forever changed how we understand reality itself.",
+        "The device in your pocket was considered impossible by leading scientists just 30 years ago.",
+        "Every breath you take connects you to the last moments of dying stars."
+    ],
+    
+    // Type 4: Myth Busters
+    mythBusters: [
+        "Contrary to what you've heard, humans use 100% of their brains, not just 10%.",
+        "That story about Einstein failing math? Complete fiction, yet we keep repeating it.",
+        "The Great Wall of China isn't visible from space—but something in your backyard might be.",
+        "Lightning actually does strike the same place twice—some spots get hit thousands of times.",
+        "The five-second rule for dropped food? Science says microbes don't actually wait politely."
+    ],
+    
+    // Type 5: Personal Stakes
+    personalStakes: [
+        "Every day, your body fights off cancer about five times without you noticing.",
+        "The next 10 minutes could change how you make decisions for the rest of your life.",
+        "Your digital footprint reveals more about you than your closest friends know.",
+        "The way you breathe right now might be shortening your lifespan.",
+        "The algorithms shaping your worldview were designed by people you'll never meet."
+    ],
+    
+    // Type 6: Historical What-Ifs
+    historicalWhatIfs: [
+        "If a single conversation hadn't happened in 1945, half the world's major cities might not exist today.",
+        "What if penicillin had never been discovered? Imagine a world where a paper cut could be fatal.",
+        "If one ship hadn't been delayed by fog in 1588, we might all be speaking Spanish right now.",
+        "What if the printing press had been suppressed? Democracy might never have emerged.",
+        "If one patent clerk hadn't daydreamed on his commute, we might still believe time is absolute."
+    ],
+    
+    // Type 7: Shocking Statistics
+    shockingStats: [
+        "By the time this audio ends, humans will have generated more data than existed in all of human history before 2003.",
+        "While listening to this, you'll make about 35,000 unconscious decisions without realizing it.",
+        "In the next 60 minutes, about 11 million pieces of plastic will enter our oceans.",
+        "Of all humans who have ever lived past age 65, half are alive right now.",
+        "Over 99.9% of all species that ever existed on Earth are now extinct."
+    ],
+    
+    // Type 8: Paradoxes
+    paradoxes: [
+        "The technology making our lives easier might actually be making us less happy.",
+        "The more connected we become digitally, the more isolated we feel in reality.",
+        "The more choices we have, the less satisfied we are with what we choose.",
+        "The smarter our devices get, the more our own mental abilities seem to decline.",
+        "The more we try to control uncertainty, the more anxious we become about what we can't control."
+    ],
+    
+    // Type 9: Cliffhangers
+    cliffhangers: [
+        "In the next few minutes, I'll reveal why thousands of scientists might have been wrong for decades.",
+        "Three everyday objects around you contain a secret that changed human history forever.",
+        "By the end of this audio, you'll understand the invisible pattern controlling most of your decisions.",
+        "What I'm about to explain was illegal to teach less than a century ago.",
+        "The concept we're exploring today was considered so dangerous that its discoverer nearly destroyed all evidence of it."
+    ],
+    
+    // Type 10: Sensory Scenes
+    sensoryScenes: [
+        "Imagine standing in a laboratory at midnight as a faint blue glow reveals something no human has ever seen before.",
+        "Picture yourself in a dusty archive, holding a forgotten manuscript that contains the answer to a 300-year-old mystery.",
+        "Feel the weight of a small device in your hand—a device that would seem like magic to someone from just one generation ago.",
+        "Listen closely to the silence between your heartbeats—that's where we'll find the answer we're looking for today.",
+        "Step into a world where the rules we take for granted simply don't apply—where up can be down and time isn't what it seems."
+    ]
+};
+
+// Array of hook type keys for easier access
+const hookTypes = [
+    'surprisingFacts', 
+    'thoughtQuestions', 
+    'boldStatements', 
+    'mythBusters',
+    'personalStakes',
+    'historicalWhatIfs',
+    'shockingStats',
+    'paradoxes',
+    'cliffhangers',
+    'sensoryScenes'
+];
+
 const audioStyles = {
     modules: [
         {
@@ -84,125 +190,18 @@ function getModuleDescription(moduleName) {
     return module ? module.moduleDescription : "clear and engaging";
 };
 
-function getSystemPrompt() {
+function getSystemPrompt(system='audio') {
     // Generate a random number between 1 and 10 for hook selection
     const randomHookType = Math.floor(Math.random() * 10) + 1;
     
     // Select a hook within that category using another random number
     const randomOption = Math.floor(Math.random() * 5) + 1;
     
-    // All hook types with 5 examples each
-    const hooks = {
-        // Type 1: Surprising Facts
-        surprisingFacts: [
-            "Did you know the average person will spend six months of their life waiting at red lights?",
-            "Did you know your brain's storage capacity is considered virtually unlimited?",
-            "Did you know we share 50% of our DNA with bananas?",
-            "Did you know the world's largest desert isn't the Sahara—it's Antarctica?",
-            "Did you know your smartphone has more computing power than NASA used to put humans on the moon?"
-        ],
-        
-        // Type 2: Thought-Provoking Questions
-        thoughtQuestions: [
-            "What if everything you believe about success is completely wrong?",
-            "How would your life change if you knew exactly when you would die?",
-            "What parts of your identity were chosen for you, not by you?",
-            "If you could preserve only one memory forever, which would you choose?",
-            "What makes something true, when our understanding changes every decade?"
-        ],
-        
-        // Type 3: Bold Statements
-        boldStatements: [
-            "In 1952, a housewife's headache led to a discovery that would save millions of lives.",
-            "Your morning coffee ritual exists because of a 13th-century goat herder's observation.",
-            "A single equation written in 1905 forever changed how we understand reality itself.",
-            "The device in your pocket was considered impossible by leading scientists just 30 years ago.",
-            "Every breath you take connects you to the last moments of dying stars."
-        ],
-        
-        // Type 4: Myth Busters
-        mythBusters: [
-            "Contrary to what you've heard, humans use 100% of their brains, not just 10%.",
-            "That story about Einstein failing math? Complete fiction, yet we keep repeating it.",
-            "The Great Wall of China isn't visible from space—but something in your backyard might be.",
-            "Lightning actually does strike the same place twice—some spots get hit thousands of times.",
-            "The five-second rule for dropped food? Science says microbes don't actually wait politely."
-        ],
-        
-        // Type 5: Personal Stakes
-        personalStakes: [
-            "Every day, your body fights off cancer about five times without you noticing.",
-            "The next 10 minutes could change how you make decisions for the rest of your life.",
-            "Your digital footprint reveals more about you than your closest friends know.",
-            "The way you breathe right now might be shortening your lifespan.",
-            "The algorithms shaping your worldview were designed by people you'll never meet."
-        ],
-        
-        // Type 6: Historical What-Ifs
-        historicalWhatIfs: [
-            "If a single conversation hadn't happened in 1945, half the world's major cities might not exist today.",
-            "What if penicillin had never been discovered? Imagine a world where a paper cut could be fatal.",
-            "If one ship hadn't been delayed by fog in 1588, we might all be speaking Spanish right now.",
-            "What if the printing press had been suppressed? Democracy might never have emerged.",
-            "If one patent clerk hadn't daydreamed on his commute, we might still believe time is absolute."
-        ],
-        
-        // Type 7: Shocking Statistics
-        shockingStats: [
-            "By the time this audio ends, humans will have generated more data than existed in all of human history before 2003.",
-            "While listening to this, you'll make about 35,000 unconscious decisions without realizing it.",
-            "In the next 60 minutes, about 11 million pieces of plastic will enter our oceans.",
-            "Of all humans who have ever lived past age 65, half are alive right now.",
-            "Over 99.9% of all species that ever existed on Earth are now extinct."
-        ],
-        
-        // Type 8: Paradoxes
-        paradoxes: [
-            "The technology making our lives easier might actually be making us less happy.",
-            "The more connected we become digitally, the more isolated we feel in reality.",
-            "The more choices we have, the less satisfied we are with what we choose.",
-            "The smarter our devices get, the more our own mental abilities seem to decline.",
-            "The more we try to control uncertainty, the more anxious we become about what we can't control."
-        ],
-        
-        // Type 9: Cliffhangers
-        cliffhangers: [
-            "In the next few minutes, I'll reveal why thousands of scientists might have been wrong for decades.",
-            "Three everyday objects around you contain a secret that changed human history forever.",
-            "By the end of this audio, you'll understand the invisible pattern controlling most of your decisions.",
-            "What I'm about to explain was illegal to teach less than a century ago.",
-            "The concept we're exploring today was considered so dangerous that its discoverer nearly destroyed all evidence of it."
-        ],
-        
-        // Type 10: Sensory Scenes
-        sensoryScenes: [
-            "Imagine standing in a laboratory at midnight as a faint blue glow reveals something no human has ever seen before.",
-            "Picture yourself in a dusty archive, holding a forgotten manuscript that contains the answer to a 300-year-old mystery.",
-            "Feel the weight of a small device in your hand—a device that would seem like magic to someone from just one generation ago.",
-            "Listen closely to the silence between your heartbeats—that's where we'll find the answer we're looking for today.",
-            "Step into a world where the rules we take for granted simply don't apply—where up can be down and time isn't what it seems."
-        ]
-    };
-    
-    // Array of hook type keys for easier access
-    const hookTypes = [
-        'surprisingFacts', 
-        'thoughtQuestions', 
-        'boldStatements', 
-        'mythBusters',
-        'personalStakes',
-        'historicalWhatIfs',
-        'shockingStats',
-        'paradoxes',
-        'cliffhangers',
-        'sensoryScenes'
-    ];
-    
     // Select the hook based on random numbers
     const selectedType = hookTypes[randomHookType-1];
     const selectedHook = hooks[selectedType][randomOption-1];
 
-    return `
+    return system === 'audio' ? `
         - don't use generic, "exactly", "yeah" to switch speakers ex: "Exactly, I mean, it’s like…" instead use ex: "I mean, it’s like…" 
         Do not start with Hey everyone, good morning or something generic like welcome to our podcast instead: 
             Grab attention in the first 10 seconds with one of these attention-grabbing hooks:  
@@ -240,7 +239,23 @@ function getSystemPrompt() {
         - Your top priority is to **make listeners feel part of a real conversation**, not a scripted lecture.  
         - Embrace imperfections—**they make speech human**.
         - Improvise small variations if needed to keep it fresh.  
-       `;
+       ` : `
+             You are an expert medical education content creator working for EulaIQ.
+             You are given educationally delicate content so ensure you create question from every part of the content leaving out absolutely nothing.
+             The goal is that when all the questions are answered by user they know every part of the content automatically.
+             Your task is to create high-quality multiple-choice questions based on the medical content provided.
+             
+             Guidelines:
+             - Create medically accurate questions based ONLY on the provided content
+             - Each question should have 4 options (A-D) with exactly one correct answer
+             - Provide a detailed explanation for why the correct answer is right
+             - Generate varied difficulty levels (easy, medium, hard)
+             - Analyze the importance of each question with these additional fields:
+               * priority: 'high', 'medium', or 'low' based on clinical importance
+               * relevanceScore: numerical value 0-100 indicating importance (higher = more important)
+               * examFrequency: 'very common', 'common', 'uncommon', or 'rare' based on how often this appears in exams
+               * conceptCategory: categorize the concept
+             `;
 }
 
 function getAudioGenerationPrompt() {

@@ -220,14 +220,13 @@ function prepareContentForProcessing(content) {
 }
 
 //  * Build the appropriate query based on content type and processing module
-function buildQuery(previousContent, content, module, moduleDescription, voiceActors, isLastPart, type) {
+function buildQuery(previousContent, content, module, moduleDescription, voiceActors, isLastPart, type, reference="") {
   if (type === "question") {
     return `{
       "task": create ${module} questions,
-      "description": Generate json data of ${module} questions this means ${moduleDescription}, the json data should have the following structure ${mcqQuestionStructure()},
+      "description": Generate json data: ${moduleDescription}, the json data should have the following structure ${mcqQuestionStructure(reference)},
       "previousContent": ${previousContent},
       "currentContent": ${content},
-      "isLastPart": ${isLastPart}
     }`;
   } else if (type === "audio") {
     return queryCreator(

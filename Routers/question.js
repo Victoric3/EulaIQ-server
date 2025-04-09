@@ -7,13 +7,15 @@ const {
   fetchExamData,
   getQuestionsByPriority,
   getEbookQuestionsSummary, 
-  getQuestionGenerationStatus
+  getQuestionGenerationStatus,
+  generateQuestionsForSection
 } = require("../Controllers/question");
 const { validateSession } = require("../Middlewares/Authorization/auth");
 
 router.get("/getQuestion", validateSession, getQuestion);
 router.post("/generateQuestion", validateSession, handleQuestionGeneration);
-router.get('/status/:ebookId', validateSession, getQuestionGenerationStatus);
+router.post("/section/generateQuestion", validateSession, generateQuestionsForSection);
+router.get('/status/:examId', validateSession, getQuestionGenerationStatus);
 router.post("/fetchExamData", validateSession, fetchExamData);
 router.post(
   "/continueQuestionGeneration",

@@ -775,6 +775,7 @@ const getUserEbooks = async (req, res) => {
 
 const getEbookSections = async (req, res) => {
   const { ebookId } = req.params;
+  console.log("fetching sections for ebookId: ", ebookId);
   const os = require('os');
   const path = require('path');
   const fs = require('fs');
@@ -889,76 +890,19 @@ const getEbookSections = async (req, res) => {
       /* Basic content structure */
       .chapter-content {
         page-break-before: always;
-        margin: 0 0.5em;
-      }
-      
-      .subchapter {
-        margin-top: 1.8em;
+        margin: 0 1em; /* Increased horizontal margin */
+        padding: 0 0.5em; /* Added padding */
+        max-width: 100%; /* Ensure content doesn't exceed container */
+        overflow-wrap: break-word; /* Break long words */
+        word-wrap: break-word; /* Legacy support */
       }
       
       /* Text elements */
       p {
         margin-bottom: 0.8em;
         line-height: 1.5;
-        text-align: justify;
-      }
-      
-      /* Table styling */
-      table {
-        width: 100%;
-        margin: 1.5em 0;
-        border-collapse: collapse;
-        font-size: 0.9em;
-      }
-      
-      th, td {
-        padding: 0.7em;
-        border: 1px solid #ddd;
-        text-align: left;
-      }
-      
-      th {
-        background-color: #f5f5f5;
-        font-weight: 600;
-        color: #333;
-      }
-      
-      /* FIX #2: Improved figure description styling */
-      .figure-reference, .image {
-        margin: 2em 0;
-        padding: 1em 1.2em;
-        background-color: #f8f9fa;
-        border-left: 4px solid #4b6cb7;
-        border-radius: 3px;
-        font-style: italic;
-        color: #555;
-        line-height: 1.6;
-      }
-      
-      /* Lists */
-      ul, ol {
-        margin: 1em 0 1em 1.5em;
-      }
-      
-      li {
-        margin-bottom: 0.5em;
-        line-height: 1.5;
-      }
-      
-      /* Links */
-      a {
-        color: #3498db;
-        text-decoration: none;
-      }
-      
-      /* Emphasis */
-      strong {
-        font-weight: 600;
-        color: #2c3e50;
-      }
-      
-      em {
-        font-style: italic;
+        text-align: left; /* Changed from justify to left for more consistent spacing */
+        max-width: 100%; /* Ensure paragraphs don't overflow */
       }
       
       /* Table overflow handling */
@@ -968,13 +912,21 @@ const getEbookSections = async (req, res) => {
         -webkit-overflow-scrolling: touch; /* For iOS momentum scrolling */
         margin: 1.5em 0;
         position: relative;
+        max-width: 100%; /* Ensure container doesn't overflow */
       }
       
       table {
         width: 100%;
-        min-width: 600px; /* Force wide tables to trigger scrolling */
+        min-width: auto; /* Remove forced min-width */
+        max-width: 100%; /* Ensure table doesn't overflow */
         border-collapse: collapse;
         font-size: 0.9em;
+      }
+      
+      /* Add for any element that might contain text */
+      * {
+        max-width: 100%;
+        overflow-wrap: break-word;
       }
     `;
 
@@ -1087,6 +1039,65 @@ const getEbookSectionsCount = async (req, res) => {
   }
 };
 
+const getEbookSectionTitles = async (req, res) => {
+  const { ebookId } = req.params;
+  console.log("Fetching section titles for ebookId:", ebookId);
+
+  try {
+    // Find ebook and select only the necessary fields
+    const ebook = await Story.findById(ebookId)
+      .select('sections.title sections.type title')
+      .lean();
+      
+    if (!ebook) {
+      return res.status(404).json({
+        success: false,
+        message: "Ebook not found"
+      });
+    }
+    
+    // Create hierarchical structure of sections
+    const structuredSections = [];
+    let currentHeadSection = null;
+    
+    if (ebook.sections && ebook.sections.length > 0) {
+      ebook.sections.forEach(section => {
+        if (section.type === 'head') {
+          // Start a new head section
+          currentHeadSection = {
+            title: section.title,
+            type: 'head',
+            subsections: []
+          };
+          structuredSections.push(currentHeadSection);
+        } else if (section.type === 'sub' && currentHeadSection) {
+          // Add to current head section's subsections
+          currentHeadSection.subsections.push({
+            title: section.title,
+            type: 'sub'
+          });
+        }
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        ebookTitle: ebook.title,
+        sections: structuredSections,
+        totalSections: ebook.sections?.length || 0
+      }
+    });
+  } catch (error) {
+    console.error("Error in getEbookSectionTitles:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch ebook sections",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   addStory,
   addImage,
@@ -1099,5 +1110,6 @@ module.exports = {
   deleteStory,
   getUserEbooks,
   getEbookSections,
-  getEbookSectionsCount
+  getEbookSectionsCount,
+  getEbookSectionTitles
 };

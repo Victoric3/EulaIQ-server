@@ -18,7 +18,7 @@ const output = (voiceActor) => {
 };
 
 // Update the mcqQuestionStructure function to include priority fields
-const mcqQuestionStructure = () => {
+const mcqQuestionStructure = (reference) => {
   return `
     {
       "questions": [
@@ -27,7 +27,7 @@ const mcqQuestionStructure = () => {
           "options": ["string1", "string2", "string3", "string4"],
           "correctOption": "number (0-3), index of the correct option",
           "explanation": "string, detailed explanation of why the answer is correct",
-          "reference": "string, specific part of the content where this is from",
+          "reference": "string, specific part of the content where this is from: ${reference}",
           "difficulty": "string (easy, medium, hard)",
           "priority": "string (high, medium, low) based on clinical importance",
           "relevanceScore": "number (0-100) indicating the importance score",
