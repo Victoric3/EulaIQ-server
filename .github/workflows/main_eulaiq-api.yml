@@ -78,20 +78,6 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
       
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F1E0D69D49BA43F7859790B396A6603B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3BADDA795BBF415B9749AC67A4425166 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AE26D494972F474EB74E28A44D1611F6 }}
-
-      - name: Stop Azure Web App before deployment
-        run: |
-          az webapp stop --name EulaIQ-Api --resource-group EulaIQ-Server
-          # Wait a moment for the app to fully stop
-          sleep 10
-        continue-on-error: true
-
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -100,8 +86,4 @@ jobs:
           publish-profile: ${{ secrets.AZUREWEBAPP_PUBLISHPROFILE }}
           package: .
           clean: true
-
-      - name: Start Azure Web App after deployment
-        run: |
-          az webapp start --name EulaIQ-Api --resource-group EulaIQ-Server
-        continue-on-error: true
+          slot-name: '' # Explicitly set to empty string
