@@ -27,7 +27,7 @@ const registerForBeta = async (req, res) => {
 
     // Generate a download URL that points to our API endpoint
     // We'll encode the user's email to verify their identity when downloading
-    const downloadUrl = `${process.env.API_URL || 'https://api.eulaiq.com'}/api/v1/beta/download?email=${encodeURIComponent(email)}`;
+    const downloadUrl = `${process.env.API_URL || 'https://api.eulaiq.com'}/api/v1/beta/download`;
     
     // Define Google Sheet submission URL
     const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyAeJRU_5lE93Ao8wrtQWnC1VSz0ftKa_4RxLe9ME1Qp2XKJCz1QMVMzfOxlQqK3Wda/exec';
@@ -75,8 +75,6 @@ const registerForBeta = async (req, res) => {
  */
 const downloadBetaApp = async (req, res) => {
   try {
-    const { email } = req.query;
-
     // Location of the app file in Azure storage
     const appFileUrl = "https://kingsheartebook.blob.core.windows.net/ebook/app-release.apk";
     
