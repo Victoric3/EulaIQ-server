@@ -78,12 +78,30 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
       
+      # Add this back - Azure login is required
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F1E0D69D49BA43F7859790B396A6603B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3BADDA795BBF415B9749AC67A4425166 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AE26D494972F474EB74E28A44D1611F6 }}
+      
+      # Now decide on ONLY ONE authentication method for deployment:
+      # Option 1: Using service principal (already logged in above)
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'EulaIQ-Api'
-          publish-profile: ${{ secrets.AZUREWEBAPP_PUBLISHPROFILE }}
           package: .
           clean: true
-          slot-name: '' # Explicitly set to empty string
+          
+      # OR Option 2: Using publish profile (choose one, not both)
+      # - name: 'Deploy to Azure Web App'
+      #   id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v3
+      #   with:
+      #     app-name: 'EulaIQ-Api'
+      #     publish-profile: ${{ secrets.AZUREWEBAPP_PUBLISHPROFILE }}
+      #     package: .
+      #     clean: true
