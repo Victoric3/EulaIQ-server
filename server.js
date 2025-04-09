@@ -27,10 +27,21 @@ rateLimit({
     return req.user;
   },
 });
+
+// Allow requests from anywhere
 const corsOptions = {
-  origin: process.env.URL,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins
+    return callback(null, true);
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
+
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
