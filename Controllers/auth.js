@@ -21,14 +21,14 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const getPrivateData = (req, res, next) => {
   try {
-    console.log("got access to route");
+    // console.log("got access to route");
     return res.status(200).json({
       success: true,
       message: "You got access to the private data in this route",
       user: req.user,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return res.status(500).json({
       success: false,
       message: "Error You are not authorized to access this route",
@@ -39,13 +39,13 @@ const getPrivateData = (req, res, next) => {
 const testmail = async (req, res) => {
   try {
     new Email(req.body.user, req.body.verificationToken).sendPasswordReset()
-      .catch(err => console.error("Email sending error:", err));
+      // .catch(err => console.error("Email sending error:", err));
     res.status(201).json({
       success: true,
       message: "Email sent successfully",
     });
   } catch (e) {
-    console.log(e)
+    // console.log(e)
     res.status(500).json({
       success: false,
       message: "Error You are not authorized to access this route",
@@ -93,7 +93,7 @@ const register = async (req, res) => {
 
         // Send verification email
         new Email(anonymousUser, verificationToken).sendConfirmEmail()
-          .catch(err => console.error("Email sending error:", err));
+          // .catch(err => console.error("Email sending error:", err));
 
         return sendToken(anonymousUser, 200, res,
           "Anonymous account converted successfully. Please check your email to verify your account.",
@@ -141,14 +141,14 @@ const register = async (req, res) => {
     await newUser.save();
 
     new Email(newUser, verificationToken).sendConfirmEmail()
-      .catch(err => console.error("Email sending error:", err));
+      // .catch(err => console.error("Email sending error:", err));
 
     return sendToken(newUser, 201, req, res,
       "Registration successful. Please check your email to verify your account.",
       deviceInfo
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    // console.error("Registration error:", error);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -183,7 +183,7 @@ const login = async (req, res) => {
 
       // Send verification email in background
       new Email(user, verificationToken).sendUnUsualSignIn()
-        .catch(err => console.error("Email sending error:", err));
+        // .catch(err => console.error("Email sending error:", err));
 
       return res.status(403).json({
         status: "verification_required",
@@ -197,7 +197,7 @@ const login = async (req, res) => {
 
     return sendToken(user, 200, req, res, "Login successful", device);
   } catch (error) {
-    console.error("Login error:", error);
+    // console.error("Login error:", error);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -206,7 +206,7 @@ const login = async (req, res) => {
 };
 
 const changeUserName = async (req, res) => {
-  console.log("changeUserName called")
+  // console.log("changeUserName called")
   const { newUsername } = req.body;
   let user = req.user;
   try {
@@ -252,7 +252,7 @@ const forgotpassword = async (req, res) => {
     try {
       resetPasswordToken = await user.createToken();
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
     await user.save();
 
@@ -272,7 +272,7 @@ const forgotpassword = async (req, res) => {
 
 const resetpassword = async (req, res) => {
   const { resetPasswordToken, newPassword } = req.body;
-  console.log(resetPasswordToken, newPassword )
+  // console.log(resetPasswordToken, newPassword )
   try {
     if (!resetPasswordToken) {
       return res.status(400).json({
@@ -327,7 +327,7 @@ const resetpassword = async (req, res) => {
       message: "Password reset successful"
     });
   } catch (err) {
-    console.error("Password reset error:", err);
+    // console.error("Password reset error:", err);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -363,11 +363,11 @@ const confirmEmailAndSignUp = catchAsync(async (req, res) => {
 
     // Send welcome email after confirmation
     new Email(user).sendWelcome()
-      .catch(err => console.error("Welcome email error:", err));
+      // .catch(err => console.error("Welcome email error:", err));
 
     return sendToken(user, 200, req, res, "Email verified successfully. Welcome to EulaIQ!", deviceInfo);
   } catch (error) {
-    console.error("Email confirmation error:", error);
+    // console.error("Email confirmation error:", error);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -399,7 +399,7 @@ const unUsualSignIn = async (req, res) => {
 
     return sendToken(user, 200, req, res, "Verification successful", device);
   } catch (err) {
-    console.error("Unusual signin error:", err);
+    // console.error("Unusual signin error:", err);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -431,7 +431,7 @@ const resendVerificationToken = catchAsync(async (req, res, next) => {
         "An email has been sent to your inbox for verification. Please proceed to verify your email.",
     });
   } catch (e) {
-    console.error(e);
+    // console.error(e);
     res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"
@@ -521,11 +521,11 @@ const googleSignIn = async (req, res) => {
 
     // Send welcome email
     new Email(user).sendWelcome()
-      .catch(err => console.error("Welcome email error:", err));
+      // .catch(err => console.error("Welcome email error:", err));
 
     return sendToken(user, 201, req, res, "Welcome to EulaIQ!", deviceInfo);
   } catch (error) {
-    console.error("Google sign in error:", error);
+    // console.error("Google sign in error:", error);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Could not verify Google credentials"
@@ -571,7 +571,7 @@ const signOut = async (req, res) => {
       message: "Successfully signed out"
     });
   } catch (error) {
-    console.error("Sign out error:", error);
+    // console.error("Sign out error:", error);
     return res.status(500).json({
       status: "failed",
       errorMessage: "Internal server error"

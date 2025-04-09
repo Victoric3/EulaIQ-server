@@ -298,7 +298,7 @@ const getAllStories = async (req, res) => {
     const [result] = await Story.aggregate(pipeline);
     const { metadata, data } = result;
     const totalCount = metadata[0]?.total || 0;
-    console.log("story result: ", result);
+    // console.log("story result: ", result);
 
     return res.status(200).json({
       success: true,
@@ -309,7 +309,7 @@ const getAllStories = async (req, res) => {
       total: totalCount,
     });
   } catch (error) {
-    console.error("Error in getAllStories:", error);
+    // console.error("Error in getAllStories:", error);
     return res.status(500).json({
       success: false,
       message: "Server error",
@@ -320,7 +320,7 @@ const getAllStories = async (req, res) => {
 
 const detailStory = async (req, res) => {
   try {
-    console.log("Getting detailed ebook");
+    // console.log("Getting detailed ebook");
 
     // First check for ID in query params, then check slug in route params
     const ebookId = req.query.id;
@@ -331,12 +331,12 @@ const detailStory = async (req, res) => {
 
     // If ID is provided, use it first
     if (ebookId) {
-      console.log("Finding by ebook ID:", ebookId);
+      // console.log("Finding by ebook ID:", ebookId);
       story = await Story.findById(ebookId, fieldsToExclude).lean();
     }
     // Otherwise use slug
     else if (slug) {
-      console.log("Finding by slug:", slug);
+      // console.log("Finding by slug:", slug);
       story = await Story.findOne({ slug }, fieldsToExclude).lean();
     } else {
       return res.status(400).json({
@@ -363,7 +363,7 @@ const detailStory = async (req, res) => {
       data: story
     });
   } catch (error) {
-    console.error("Error in detailStory:", error);
+    // console.error("Error in detailStory:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch ebook details",
@@ -481,7 +481,7 @@ const likeStory = async (req, res) => {
         return await attemptUpdate();
       }
 
-      console.error("Error in likeStory:", error);
+      // console.error("Error in likeStory:", error);
       return res.status(500).json({
         success: false,
         errorMessage: "Internal server error",
@@ -511,7 +511,7 @@ const rateStory = async (req, res, next) => {
 
     async function attemptRatingUpdate() {
       try {
-        console.log("STARTED getting story for rating");
+        // console.log("STARTED getting story for rating");
 
         // Use findById with lean() and minimal field selection
         const story = await Story.findById(id)
@@ -595,7 +595,7 @@ const rateStory = async (req, res, next) => {
           return await attemptRatingUpdate();
         }
 
-        console.error("Error in rateStory:", error);
+        // console.error("Error in rateStory:", error);
         return res.status(500).json({
           success: false,
           message: "Failed to update rating",
@@ -607,7 +607,7 @@ const rateStory = async (req, res, next) => {
     return attemptRatingUpdate();
   }
   catch (error) {
-    console.error("Error in rateStory:", error);
+    // console.error("Error in rateStory:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update rating",
@@ -655,10 +655,10 @@ const editStory = async (req, res) => {
     }
     const shortContent = content.filter((item) => item.length < 100);
     if (shortContent.length > 0 && chapter.length > 0) {
-      console.error(
-        `Content must be at least 100 characters.`,
-        shortContent
-      );
+      // console.error(
+      //   `Content must be at least 100 characters.`,
+      //   shortContent
+      // );
       return res.status(400).json({
         success: false,
         errorMessage: "Each chapter must be at least 100 characters.",
@@ -741,7 +741,7 @@ const deleteStory = asyncErrorWrapper(async (req, res, next) => {
 
 const getUserEbooks = async (req, res) => {
   try {
-    console.log("started getting ebook for user");
+    // console.log("started getting ebook for user");
 
     // Check for stalled processing before returning results
     // Only run this occasionally to avoid overhead (e.g., 5% chance)
@@ -764,7 +764,7 @@ const getUserEbooks = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error in getUserEbooks:', error);
+    // console.error('Error in getUserEbooks:', error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user ebooks",
@@ -775,7 +775,6 @@ const getUserEbooks = async (req, res) => {
 
 const getEbookSections = async (req, res) => {
   const { ebookId } = req.params;
-  console.log("fetching sections for ebookId: ", ebookId);
   const os = require('os');
   const path = require('path');
   const fs = require('fs');
@@ -784,8 +783,6 @@ const getEbookSections = async (req, res) => {
   const tempDir = os.tmpdir();
   const epubFileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.epub`;
   const epubFilePath = path.join(tempDir, epubFileName);
-
-  console.log("ebookId: ", ebookId);
 
   try {
     // Find ebook and select necessary fields
@@ -964,19 +961,19 @@ const getEbookSections = async (req, res) => {
       `${ebook.title.replace(/[^\w\s]/gi, '')}.epub`, 
       async (err) => {
         if (err) {
-          console.error("Error sending EPUB file:", err);
+          // console.error("Error sending EPUB file:", err);
         }
 
         // Clean up the temporary file
         try {
           fs.unlinkSync(epubFilePath);
         } catch (unlinkError) {
-          console.error("Error deleting temporary EPUB:", unlinkError);
+          // console.error("Error deleting temporary EPUB:", unlinkError);
         }
       }
     );
   } catch (error) {
-    console.error("Error in getEbookSections:", error);
+    // console.error("Error in getEbookSections:", error);
     
     // Clean up in case of error
     try {
@@ -984,7 +981,7 @@ const getEbookSections = async (req, res) => {
         fs.unlinkSync(epubFilePath);
       }
     } catch (unlinkError) {
-      console.error("Error deleting temporary EPUB after error:", unlinkError);
+      // console.error("Error deleting temporary EPUB after error:", unlinkError);
     }
     
     return res.status(500).json({
@@ -1030,7 +1027,7 @@ const getEbookSectionsCount = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error in getEbookSectionsCount:", error);
+    // console.error("Error in getEbookSectionsCount:", error);
     return res.status(500).json({
       success: false, 
       message: "Failed to fetch ebook section count",
@@ -1041,7 +1038,6 @@ const getEbookSectionsCount = async (req, res) => {
 
 const getEbookSectionTitles = async (req, res) => {
   const { ebookId } = req.params;
-  console.log("Fetching section titles for ebookId:", ebookId);
 
   try {
     // Find ebook and select only the necessary fields
@@ -1089,7 +1085,7 @@ const getEbookSectionTitles = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error in getEbookSectionTitles:", error);
+    // console.error("Error in getEbookSectionTitles:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch ebook sections",

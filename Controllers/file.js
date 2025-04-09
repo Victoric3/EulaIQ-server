@@ -8,14 +8,14 @@ const path = require("path");
 const handleTextExtraction = async (file, currentPage = 0, ebook, batchSize = 1) => {
   try {
     // All files are already converted to PDF at this point
-    console.log(`Processing PDF file from page ${currentPage} with batch size ${batchSize}`);
+    // console.log(`Processing PDF file from page ${currentPage} with batch size ${batchSize}`);
     
     // Extract content using PDF processor
     const response = await extractPdfContent(file.buffer, ebook, currentPage, batchSize);
     
     return response;
   } catch (error) {
-    console.error(`Error handling text extraction for file ${file.originalname}:`, error);
+    // console.error(`Error handling text extraction for file ${file.originalname}:`, error);
     throw new Error(`Error handling text extraction: ${error.message || error}`);
   }
 };
@@ -25,7 +25,7 @@ const handlegenerateEbook = async (req, res) => {
   try {
     let file = req.file;
     const originalFile = { ...file };
-    console.log("Original file: ", file.originalname);
+    // console.log("Original file: ", file.originalname);
     
     // Check file type and convert if needed
     const fileExtension = path.extname(file.originalname).toLowerCase();
@@ -41,9 +41,9 @@ const handlegenerateEbook = async (req, res) => {
           buffer: pdfFile.buffer,
           size: pdfFile.buffer.length
         };
-        console.log('DOCX successfully converted to PDF');
+        // console.log('DOCX successfully converted to PDF');
       } catch (convError) {
-        console.error('Error converting DOCX to PDF:', convError);
+        // console.error('Error converting DOCX to PDF:', convError);
         throw new Error(`Failed to convert DOCX to PDF: ${convError.message}`);
       }
     }
@@ -61,7 +61,7 @@ const handlegenerateEbook = async (req, res) => {
           size: pdfBuffer.length
         };
       } catch (convError) {
-        console.error('Error converting PPTX to PDF:', convError);
+        // console.error('Error converting PPTX to PDF:', convError);
         throw new Error(`Failed to convert PPTX to PDF: ${convError.message}`);
       }
     }
@@ -100,13 +100,13 @@ const handlegenerateEbook = async (req, res) => {
     
     // Start background processing
     startBackgroundProcessing(file, ebook).catch(async (error) => {
-      console.error(`Background processing failed to start: ${error.message}`);
+      // console.error(`Background processing failed to start: ${error.message}`);
       await ebook.updateProcessingStatus('failed', 'Failed to start processing');
       await ebook.logProgress(`Failed to start processing: ${error.message}`, 'error');
     });
     
   } catch (error) {
-    console.error("Error generating ebook:", error);
+    // console.error("Error generating ebook:", error);
     res.status(500).json({errorMessage: `Error generating ebook: ${error.message || error}`});
   }
 };
@@ -138,7 +138,7 @@ async function startBackgroundProcessing(file, ebook) {
     await processPagesInBackground(file, ebook, currentPage, response.totalPages, BATCH_SIZE);
     
   } catch (error) {
-    console.error(`Background processing initialization failed: ${error.message}`);
+    // console.error(`Background processing initialization failed: ${error.message}`);
     ebook.status = "error";
     ebook.processingError = error.message;
     await ebook.updateProcessingStatus('failed', 'Initialization failed');
@@ -167,7 +167,7 @@ async function processPagesInBackground(file, ebook, startPage, totalPages, batc
         await ebook.logProgress(`Processed page ${currentPage} of ${totalPages}`);
       } catch (error) {
         // Log the error but continue with next page
-        console.error(`Error processing page ${currentPage}: ${error.message}`);
+        // console.error(`Error processing page ${currentPage}: ${error.message}`);
         await ebook.logProgress(`Error processing page ${currentPage}: ${error.message}`, 'error');
         
         // Store failed page for potential retry
@@ -199,7 +199,7 @@ async function processPagesInBackground(file, ebook, startPage, totalPages, batc
     
     await ebook.logProgress(`Completed processing ${totalPages} pages for ebook: ${ebook._id}`);
   } catch (error) {
-    console.error(`Background processing failed: ${error.message}`);
+    // console.error(`Background processing failed: ${error.message}`);
     ebook.status = "error";
     ebook.processingError = error.message;
     await ebook.updateProcessingStatus('failed', `Processing failed: ${error.message}`);
@@ -226,7 +226,7 @@ async function processPageBatch(file, ebook, currentPage, batchSize) {
     
     return response;
   } catch (error) {
-    console.error(`Error handling text extraction for file ${file?.originalname || 'unknown'}:`, error);
+    // console.error(`Error handling text extraction for file ${file?.originalname || 'unknown'}:`, error);
     throw new Error(`Error handling text extraction for file ${file?.originalname || 'unknown'}: ${error.message || error}`);
   }
 }
@@ -300,7 +300,7 @@ const handleContinueEbookGeneration = async (req, res) => {
     processPagesInBackground(file, ebook, currentPage, totalPages, BATCH_SIZE);
     
   } catch (error) {
-    console.error("Error continuing ebook generation:", error);
+    // console.error("Error continuing ebook generation:", error);
     
     // Try to update ebook status even if there's an error
     try {
@@ -313,7 +313,7 @@ const handleContinueEbookGeneration = async (req, res) => {
         await ebook.save();
       }
     } catch (logError) {
-      console.error("Failed to log error to ebook:", logError);
+      // console.error("Failed to log error to ebook:", logError);
     }
     
     res.status(500).json({
@@ -360,7 +360,7 @@ const getEbookProcessingStatus = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`Error fetching ebook status: ${error.message}`);
+    // console.error(`Error fetching ebook status: ${error.message}`);
     res.status(500).json({
       status: 'error',
       message: `Error fetching status: ${error.message}`
@@ -372,7 +372,7 @@ const getEbookProcessingStatus = async (req, res) => {
 const getEbookProcessingLogs = async (req, res) => {
   try {
     const { ebookId } = req.params;
-    console.log("ebookId: ", ebookId);
+    // console.log("ebookId: ", ebookId);
     const ebook = await getEbookById(ebookId);
     if (!ebook) {
       return res.status(404).json({
@@ -389,7 +389,7 @@ const getEbookProcessingLogs = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`Error fetching ebook logs: ${error.message}`);
+    // console.error(`Error fetching ebook logs: ${error.message}`);
     res.status(500).json({
       status: 'error',
       message: `Error fetching logs: ${error.message}`
@@ -400,7 +400,7 @@ const getEbookProcessingLogs = async (req, res) => {
 const fetchFileForClient = async (req, res) => {
   try {
     const { fileUrl } = req.query;
-    console.log("fileUrl: ", fileUrl);
+    // console.log("fileUrl: ", fileUrl);
     
     // Validate that fileUrl is provided
     if (!fileUrl) {
@@ -419,7 +419,7 @@ const fetchFileForClient = async (req, res) => {
     return res.send(Buffer.from(fileResponse.file.buffer));
   
   } catch (error) {
-    console.error("Error retrieving file:", error);
+    // console.error("Error retrieving file:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve file",

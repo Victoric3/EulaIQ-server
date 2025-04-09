@@ -130,7 +130,7 @@ const addStoryToReadList = async (req, res, next) => {
       status: isInReadList
     });
   } catch (error) {
-    console.error('Error in addStoryToReadList:', error);
+    // console.error('Error in addStoryToReadList:', error);
     return res.status(500).json({
       success: false,
       message: "Failed to update reading list",
@@ -195,7 +195,7 @@ const readListPage = async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error("Error in readListPage:", error);
+    // console.error("Error in readListPage:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch reading list",
@@ -231,7 +231,7 @@ const checkStoryInReadList = async (req, res) => {
       isInReadList: isInReadList || false
     });
   } catch (error) {
-    console.error("Error in checkStoryInReadList:", error);
+    // console.error("Error in checkStoryInReadList:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to check reading list status",
@@ -296,7 +296,7 @@ const getLikedStoriesPage = async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error("Error in getLikedStoriesPage:", error);
+    // console.error("Error in getLikedStoriesPage:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch favorites",

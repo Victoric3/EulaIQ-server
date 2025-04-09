@@ -10,14 +10,14 @@ const ebookCovers = JSON.parse(fs.readFileSync(ebookCoversPath, 'utf8'));
 const coverKeys = Object.keys(ebookCovers);
 
 const createEbook = async (req, file) => {
-  console.log("started creating ebook");
+  // console.log("started creating ebook");
   try {
     // Select a random cover image from the available covers
     const randomIndex = Math.floor(Math.random() * coverKeys.length);
     const randomCoverKey = coverKeys[randomIndex];
     const coverImageUrl = ebookCovers[randomCoverKey];
     
-    console.log(`Selected random cover: ${randomCoverKey}`);
+    // console.log(`Selected random cover: ${randomCoverKey}`);
 
     const story = new Story({
       title: file.originalname.replace(/\.[^/.]+$/, ""),
@@ -32,13 +32,13 @@ const createEbook = async (req, file) => {
 
     return story;
   } catch (error) {
-    console.error('Error creating story from file:', error);
+    // console.error('Error creating story from file:', error);
     throw new Error(`Failed to create story: ${error.message}`);
   }
 };
 
 const getEbookById = async (storyId) => {
-  console.log("started getting ebook");
+  // console.log("started getting ebook");
   try {
     
     const story = await Story.findById(storyId)
@@ -47,10 +47,10 @@ const getEbookById = async (storyId) => {
       throw new Error('Ebook not found');
     }
 
-    console.log("gotten ebook: ", story._id);
+    // console.log("gotten ebook: ", story._id);
     return story;
   } catch (error) {
-    console.error('Error fetching story:', error);
+    // console.error('Error fetching story:', error);
     throw new Error(`Failed to fetch story: ${error.message}`);
   }
 };
@@ -145,7 +145,7 @@ const getEbooksForUser = async (userId, page = 1, limit = 10, searchQuery = "", 
     // Calculate total pages
     const totalPages = Math.ceil(total / limit);
     
-    console.log(`Found ${stories.length} ebooks for user with filter: ${filterBy}`);
+    // console.log(`Found ${stories.length} ebooks for user with filter: ${filterBy}`);
     
     return {
       ebooks: stories,
@@ -157,7 +157,7 @@ const getEbooksForUser = async (userId, page = 1, limit = 10, searchQuery = "", 
       }
     };
   } catch (error) {
-    console.error('Error fetching user ebooks:', error);
+    // console.error('Error fetching user ebooks:', error);
     throw new Error(`Failed to fetch user ebooks: ${error.message}`);
   }
 };
@@ -168,7 +168,7 @@ const getEbooksForUser = async (userId, page = 1, limit = 10, searchQuery = "", 
  */
 const detectStalledProcessing = async (timeThresholdMinutes = 60) => {
   try {
-    console.log("Checking for stalled ebook processing...");
+    // console.log("Checking for stalled ebook processing...");
     const timeThreshold = new Date();
     timeThreshold.setMinutes(timeThreshold.getMinutes() - timeThresholdMinutes);
 
@@ -178,7 +178,7 @@ const detectStalledProcessing = async (timeThresholdMinutes = 60) => {
       "processingDetails.lastUpdated": { $lt: timeThreshold }
     });
 
-    console.log(`Found ${stalledEbooks.length} stalled ebooks`);
+    // console.log(`Found ${stalledEbooks.length} stalled ebooks`);
 
     // Update each stalled ebook
     for (const ebook of stalledEbooks) {
@@ -187,12 +187,12 @@ const detectStalledProcessing = async (timeThresholdMinutes = 60) => {
       await ebook.updateProcessingStatus('failed', 'Processing stalled and timed out');
       await ebook.logProgress(`Processing appears to have stalled. No updates for ${timeThresholdMinutes} minutes.`, 'error');
       await ebook.save();
-      console.log(`Reset stalled ebook: ${ebook._id}`);
+      // console.log(`Reset stalled ebook: ${ebook._id}`);
     }
 
     return stalledEbooks.length;
   } catch (error) {
-    console.error('Error detecting stalled processing:', error);
+    // console.error('Error detecting stalled processing:', error);
     return 0;
   }
 };
@@ -231,7 +231,7 @@ const softDeleteEbook = async (req, res) => {
       message: "Ebook has been moved to trash"
     });
   } catch (error) {
-    console.error("Error in softDeleteEbook:", error);
+    // console.error("Error in softDeleteEbook:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete ebook",
@@ -306,7 +306,7 @@ const hardDeleteEbook = async (req, res) => {
       message: "Ebook has been permanently deleted and all references cleaned up"
     });
   } catch (error) {
-    console.error("Error in hardDeleteEbook:", error);
+    // console.error("Error in hardDeleteEbook:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete ebook permanently",

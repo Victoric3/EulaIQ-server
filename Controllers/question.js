@@ -9,7 +9,7 @@ const mongoose = require("mongoose");
 const { getSystemPrompt } = require("../Helpers/query/queryMapping");
 
 exports.getQuestion = async (req, res) => {
-  console.log("started hitting getQestion");
+  // console.log("started hitting getQestion");
   try {
     const {
       examIds, // String or array of exam IDs
@@ -132,7 +132,7 @@ exports.getQuestion = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in getQuestion:", error);
+    // console.error("Error in getQuestion:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch questions",
@@ -226,14 +226,14 @@ exports.handleQuestionGeneration = async (req, res) => {
       course: course || ebook.title,
       topic: topic || "General Knowledge",
     }).catch(async (error) => {
-      console.error("Question generation failed:", error);
+      // console.error("Question generation failed:", error);
       await Exam.findByIdAndUpdate(exam._id, {
         status: "error",
         error: error.message,
       });
     });
   } catch (error) {
-    console.error("Error initiating question generation:", error);
+    // console.error("Error initiating question generation:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to start question generation",
@@ -246,7 +246,7 @@ exports.handleQuestionGeneration = async (req, res) => {
  * Generate questions in background with progress tracking and retry mechanism
  */
 async function generateQuestionsInBackground(ebook, exam, options) {
-  console.log(`Starting question generation for ebook: ${ebook._id}`);
+  // console.log(`Starting question generation for ebook: ${ebook._id}`);
 
   try {
     await exam.updateOne({
@@ -295,11 +295,11 @@ async function generateQuestionsInBackground(ebook, exam, options) {
           },
         });
 
-        console.log(
-          `Section ${headSection.title} not ready yet. Waiting before retry ${
-            retryCount + 1
-          }/${MAX_RETRIES}`
-        );
+        // // console.log(
+        //   `Section ${headSection.title} not ready yet. Waiting before retry ${
+        //     retryCount + 1
+        //   }/${MAX_RETRIES}`
+        // );
 
         // Exponential backoff: wait longer between each retry
         const waitTime = 5000 * Math.pow(2, retryCount); // 5s, 10s, 20s
@@ -322,9 +322,9 @@ async function generateQuestionsInBackground(ebook, exam, options) {
 
       // If we've exhausted retries and section still not ready, skip this section with a warning
       if (!sectionAvailable && retryCount >= MAX_RETRIES) {
-        console.warn(
-          `Section ${headSection.title} not available after ${MAX_RETRIES} retry attempts. Skipping section.`
-        );
+        // // console.warn(
+        //   `Section ${headSection.title} not available after ${MAX_RETRIES} retry attempts. Skipping section.`
+        // );
         await exam.updateOne({
           $set: {
             processingStatus: `Warning: Skipped section ${i + 1}/${totalSections} because content was not available.`,
@@ -391,13 +391,13 @@ async function generateQuestionsInBackground(ebook, exam, options) {
         });
 
         allQuestions = allQuestions.concat(sectionQuestions);
-        console.log(
-          `Added ${sectionQuestions.length} questions for section: ${headSection.title}`
-        );
+        // // console.log(
+        //   `Added ${sectionQuestions.length} questions for section: ${headSection.title}`
+        // );
       } else {
-        console.warn(
-          `No questions generated for section: ${headSection.title}`
-        );
+        // // console.warn(
+        //   `No questions generated for section: ${headSection.title}`
+        // );
       }
 
       // Use current content as context for next round
@@ -414,11 +414,11 @@ async function generateQuestionsInBackground(ebook, exam, options) {
       },
     });
 
-    console.log(
-      `Question generation complete for exam ${exam._id}: ${allQuestions.length} questions`
-    );
+    // // console.log(
+    //   `Question generation complete for exam ${exam._id}: ${allQuestions.length} questions`
+    // );
   } catch (error) {
-    console.error(`Question generation failed for ebook ${ebook._id}:`, error);
+    // console.error(`Question generation failed for ebook ${ebook._id}:`, error);
 
     // Update exam with error status
     await Exam.findByIdAndUpdate(exam._id, {
@@ -494,7 +494,7 @@ exports.getQuestionGenerationStatus = async (req, res) => {
 exports.continueQuestionGeneration = async (req, res) => {
   try {
     const { examId, questionType, questionDescription } = req.body;
-    console.log(examId, questionType, questionDescription);
+    // console.log(examId, questionType, questionDescription);
     // Validate required parameter
     if (!examId || !questionType || !questionDescription) {
       return res.status(400).json({
@@ -566,14 +566,14 @@ exports.continueQuestionGeneration = async (req, res) => {
 
     // Resume background processing but continue from where it left off
     continueQuestionsInBackground(ebook, exam, options).catch(async (error) => {
-      console.error("Question generation failed:", error);
+      // console.error("Question generation failed:", error);
       await Exam.findByIdAndUpdate(exam._id, {
         status: "error",
         error: error.message,
       });
     });
   } catch (error) {
-    console.error("Error continuing question generation:", error);
+    // console.error("Error continuing question generation:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to continue question generation",
@@ -586,7 +586,7 @@ exports.continueQuestionGeneration = async (req, res) => {
  * Continue question generation from where it left off
  */
 async function continueQuestionsInBackground(ebook, exam, options) {
-  console.log(`Continuing question generation for exam: ${exam._id}`);
+  // console.log(`Continuing question generation for exam: ${exam._id}`);
 
   try {
     await exam.updateOne({
@@ -626,7 +626,7 @@ async function continueQuestionsInBackground(ebook, exam, options) {
 
     // If all sections have been processed, just mark as complete
     if (startIndex >= headSections.length) {
-      console.log(`All sections already processed for exam ${exam._id}`);
+      // console.log(`All sections already processed for exam ${exam._id}`);
       await exam.updateOne({
         $set: {
           status: "complete",
@@ -638,9 +638,9 @@ async function continueQuestionsInBackground(ebook, exam, options) {
       return;
     }
 
-    console.log(
-      `Continuing question generation from section index ${startIndex} of ${headSections.length}`
-    );
+    // // console.log(
+    //   `Continuing question generation from section index ${startIndex} of ${headSections.length}`
+    // );
 
     // Process remaining head sections
     let allQuestions = [...exam.questions]; // Start with existing questions
@@ -672,11 +672,11 @@ async function continueQuestionsInBackground(ebook, exam, options) {
           },
         });
 
-        console.log(
-          `Section ${headSection.title} not ready yet. Waiting before retry ${
-            retryCount + 1
-          }/${MAX_RETRIES}`
-        );
+        // // console.log(
+        //   `Section ${headSection.title} not ready yet. Waiting before retry ${
+        //     retryCount + 1
+        //   }/${MAX_RETRIES}`
+        // );
 
         // Exponential backoff: wait longer between each retry
         const waitTime = 5000 * Math.pow(2, retryCount); // 5s, 10s, 20s
@@ -699,9 +699,9 @@ async function continueQuestionsInBackground(ebook, exam, options) {
 
       // If we've exhausted retries and section still not ready, skip this section with a warning
       if (!sectionAvailable && retryCount >= MAX_RETRIES) {
-        console.warn(
-          `Section ${headSection.title} not available after ${MAX_RETRIES} retry attempts. Skipping section.`
-        );
+        // // console.warn(
+        //   `Section ${headSection.title} not available after ${MAX_RETRIES} retry attempts. Skipping section.`
+        // );
         await exam.updateOne({
           $set: {
             processingStatus: `Warning: Skipped section ${i + 1}/${totalSections} because content was not available.`,
@@ -770,13 +770,13 @@ async function continueQuestionsInBackground(ebook, exam, options) {
         });
 
         allQuestions = allQuestions.concat(sectionQuestions);
-        console.log(
-          `Added ${sectionQuestions.length} questions for section: ${headSection.title}`
-        );
+        // // console.log(
+        //   `Added ${sectionQuestions.length} questions for section: ${headSection.title}`
+        // );
       } else {
-        console.warn(
-          `No questions generated for section: ${headSection.title}`
-        );
+        // // console.warn(
+        //   `No questions generated for section: ${headSection.title}`
+        // );
       }
 
       // Use current content as context for next round
@@ -793,11 +793,11 @@ async function continueQuestionsInBackground(ebook, exam, options) {
       },
     });
 
-    console.log(
-      `Question generation complete for exam ${exam._id}: ${allQuestions.length} questions`
-    );
+    // // console.log(
+    //   `Question generation complete for exam ${exam._id}: ${allQuestions.length} questions`
+    // );
   } catch (error) {
-    console.error(`Question generation failed for exam ${exam._id}:`, error);
+    // console.error(`Question generation failed for exam ${exam._id}:`, error);
 
     // Update exam with error status
     await Exam.findByIdAndUpdate(exam._id, {
@@ -1224,7 +1224,7 @@ exports.fetchExamData = async (req, res) => {
     doc.end();
 
   } catch (error) {
-    console.error("Error generating exam PDF:", error);
+    // console.error("Error generating exam PDF:", error);
     // Only send error response if headers haven't been sent yet
     if (!res.headersSent) {
       res.status(500).json({
@@ -1304,7 +1304,7 @@ exports.getQuestionsByPriority = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching questions by priority:", error);
+    // console.error("Error fetching questions by priority:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch questions by priority",
@@ -1319,7 +1319,7 @@ exports.getQuestionsByPriority = async (req, res) => {
 exports.getEbookQuestionsSummary = async (req, res) => {
   try {
     const { ebookId } = req.params;
-    console.log("started getting questions for", ebookId);
+    // console.log("started getting questions for", ebookId);
 
     // Validate ebookId
     if (!ebookId || !mongoose.Types.ObjectId.isValid(ebookId)) {
@@ -1426,7 +1426,7 @@ exports.getEbookQuestionsSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching ebook questions summary:", error);
+    // console.error("Error fetching ebook questions summary:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch ebook questions summary",
@@ -1436,7 +1436,7 @@ exports.getEbookQuestionsSummary = async (req, res) => {
 };
 
 exports.generateQuestionsForSection = async (req, res) => {
-  console.log("Started generating questions for section", req.body);
+  // console.log("Started generating questions for section", req.body);
   try {
     const {
       ebookId,
@@ -1527,14 +1527,14 @@ exports.generateQuestionsForSection = async (req, res) => {
       institution,
       sectionTitle,
     }).catch(async (error) => {
-      console.error("Section question generation failed:", error);
+      // console.error("Section question generation failed:", error);
       await Exam.findByIdAndUpdate(exam._id, {
         status: "error",
         error: error.message,
       });
     });
   } catch (error) {
-    console.error("Error initiating section question generation:", error);
+    // console.error("Error initiating section question generation:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to start section question generation",
@@ -1547,9 +1547,9 @@ exports.generateQuestionsForSection = async (req, res) => {
  * Process questions for a specific section and create a new exam
  */
 async function processSectionQuestions(ebook, exam, options) {
-  console.log(
-    `Generating questions for section "${options.sectionTitle}" in ebook: ${ebook._id}`
-  );
+  // // console.log(
+  //   `Generating questions for section "${options.sectionTitle}" in ebook: ${ebook._id}`
+  // );
 
   try {
     await exam.updateOne({
@@ -1567,9 +1567,9 @@ async function processSectionQuestions(ebook, exam, options) {
 
     // If ebook is not complete, warn but proceed anyway
     if (currentEbook.status !== "complete") {
-      console.log(
-        `Warning: Ebook ${ebook._id} not complete, but attempting to generate questions anyway`
-      );
+      // // console.log(
+      //   `Warning: Ebook ${ebook._id} not complete, but attempting to generate questions anyway`
+      // );
 
       await exam.updateOne({
         $set: {
@@ -1661,9 +1661,9 @@ async function processSectionQuestions(ebook, exam, options) {
         },
       });
 
-      console.log(
-        `Added ${sectionQuestions.length} questions for section: ${options.sectionTitle}`
-      );
+      // // console.log(
+      //   `Added ${sectionQuestions.length} questions for section: ${options.sectionTitle}`
+      // );
 
       // Mark as complete
       await exam.updateOne({
@@ -1675,9 +1675,9 @@ async function processSectionQuestions(ebook, exam, options) {
         },
       });
     } else {
-      console.warn(
-        `No questions generated for section: ${options.sectionTitle}`
-      );
+      // // console.warn(
+      //   `No questions generated for section: ${options.sectionTitle}`
+      // );
 
       // Update exam status
       await exam.updateOne({
@@ -1691,14 +1691,14 @@ async function processSectionQuestions(ebook, exam, options) {
       });
     }
 
-    console.log(
-      `Question generation complete for section "${options.sectionTitle}" in exam ${exam._id}`
-    );
+    // // console.log(
+    //   `Question generation complete for section "${options.sectionTitle}" in exam ${exam._id}`
+    // );
   } catch (error) {
-    console.error(
-      `Question generation failed for section "${options.sectionTitle}":`,
-      error
-    );
+    // // console.error(
+    //   `Question generation failed for section "${options.sectionTitle}":`,
+    //   error
+    // );
 
     // Update exam with error status
     await Exam.findByIdAndUpdate(exam._id, {

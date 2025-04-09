@@ -15,7 +15,7 @@ const createCustomExamCore = async (
 ) => {
   try{
 
-    console.log("started createExamCore function");
+    // console.log("started createExamCore function");
     // Transform CSV row to match question schema
   const questions = [];
   rows.forEach((row) => {
@@ -43,7 +43,7 @@ const createCustomExamCore = async (
   //   row["options[3]"],
   // ].map((option) => option.trim())
   //  [row.options[0], row.options[1], row.options[2], row.options[3]].map(option => option.trim())
-  console.log('questions: ', questions);
+  // console.log('questions: ', questions);
   
   const exam = await Exam.create({
     name,
@@ -66,7 +66,7 @@ const createCustomExamCore = async (
     collection: exam,
   }
 }catch(err){
-  console.log(err);
+  // console.log(err);
   throw err
 }
 };
@@ -101,7 +101,7 @@ const editCustomExamCore = async(rows, exam) => {
   // Save the updated exam
   await exam.save();
 }catch(err){
-  console.log(err)
+  // console.log(err)
   throw err
 }
 }
@@ -155,7 +155,7 @@ const createCustomExam = async (req, res) => {
       message: "Exam created successfully",
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).json({
       success: false,
       errorMessage: error.message,
@@ -204,7 +204,7 @@ const addMoreQuestions = async (req, res) => {
       message: "Questions added successfully",
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).json({
       success: false,
       errorMessage: error.message,

@@ -145,10 +145,10 @@ const createExamHistory = async (req, res) => {
     // Generate performance summary in the background
     generatePerformanceSummary(savedExamHistory._id, enhancedQuestions, 
       topicPerformance, totalScore, totalQuestions)
-      .catch(err => console.error("Error generating performance summary:", err));
+      // .catch(err => console.error("Error generating performance summary:", err));
       
   } catch (error) {
-    console.error("Error creating exam history:", error);
+    // console.error("Error creating exam history:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -229,7 +229,7 @@ async function generatePerformanceSummary(examHistoryId, questions, topicPerform
       const jsonString = jsonMatch ? jsonMatch[1] : result;
       parsedResult = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error("Error parsing performance summary:", parseError);
+      // console.error("Error parsing performance summary:", parseError);
       // Create a fallback summary if parsing fails
       parsedResult = {
         summary: "Analysis was generated but couldn't be properly formatted.",
@@ -245,9 +245,9 @@ async function generatePerformanceSummary(examHistoryId, questions, topicPerform
       performanceSummary: parsedResult
     });
     
-    console.log(`Performance summary generated for exam history ${examHistoryId}`);
+    // console.log(`Performance summary generated for exam history ${examHistoryId}`);
   } catch (error) {
-    console.error("Failed to generate performance summary:", error);
+    // console.error("Failed to generate performance summary:", error);
   }
 }
 
@@ -316,7 +316,7 @@ const getAllExamHistory = async (req, res) => {
     const examHistoryList = await ExamHistory.find();
     res.status(200).json(examHistoryList);
   } catch (error) {
-    console.error("Error getting exam history:", error);
+    // console.error("Error getting exam history:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -353,7 +353,7 @@ const getExamHistoryByUsername = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error getting exam history by username:", error);
+    // console.error("Error getting exam history by username:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -409,7 +409,7 @@ const deleteExamHistoryById = async (req, res) => {
 
     res.status(200).json(deletedExamHistory);
   } catch (error) {
-    console.error("Error deleting exam history by ID:", error);
+    // console.error("Error deleting exam history by ID:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -449,7 +449,7 @@ const getUserAnalytics = async (req, res) => {
     examHistory.forEach(exam => {
       // Check if exam has questions array
       if (!exam.questions || !Array.isArray(exam.questions)) {
-        console.warn(`Exam ${exam._id} has no valid questions array`);
+        // console.warn(`Exam ${exam._id} has no valid questions array`);
         return; // Skip this exam
       }
       
@@ -564,7 +564,7 @@ const getUserAnalytics = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Error getting user analytics:", error);
+    // console.error("Error getting user analytics:", error);
     res.status(500).json({ 
       success: false,
       error: "Internal Server Error" 
@@ -613,7 +613,7 @@ const getHighlightedQuestions = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Error getting highlighted questions:", error);
+    // console.error("Error getting highlighted questions:", error);
     res.status(500).json({ 
       success: false,
       error: "Internal Server Error" 
@@ -625,7 +625,7 @@ const getHighlightedQuestions = async (req, res) => {
 const getExamHistoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Exam history ID:", id);
+    // console.log("Exam history ID:", id);
     
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -707,7 +707,7 @@ const getExamHistoryById = async (req, res) => {
       highlightedQuestions: examHistory.highlightedQuestions || []
     };
 
-    console.log(response);
+    // console.log(response);
     
     return res.status(200).json({
       success: true,
@@ -715,7 +715,7 @@ const getExamHistoryById = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Error getting exam history by ID:", error);
+    // console.error("Error getting exam history by ID:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve exam history",

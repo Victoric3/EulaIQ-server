@@ -95,7 +95,7 @@ const handleEbookAudioCreation = async (req, res) => {
       voiceActorsArray,
       useGpt4oAudio // Pass the new option
     }).catch(async (error) => {
-      console.error("Audio generation failed:", error);
+      // console.error("Audio generation failed:", error);
       await AudioCollection.findByIdAndUpdate(audioCollection._id, {
         status: 'error',
         error: error.message
@@ -103,7 +103,7 @@ const handleEbookAudioCreation = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Error initiating audio generation:", error);
+    // console.error("Error initiating audio generation:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to start audio generation",
@@ -189,7 +189,7 @@ const continueAudioCreation = async (req, res) => {
         voiceActorsArray,
         useGpt4oAudio: useGpt4oMethod
       }).catch(async (error) => {
-        console.error("Audio generation failed:", error);
+        // console.error("Audio generation failed:", error);
         await AudioCollection.findByIdAndUpdate(audioCollection._id, {
           status: 'error',
           error: error.message
@@ -197,7 +197,7 @@ const continueAudioCreation = async (req, res) => {
       });
       
     } catch (error) {
-      console.error("Error continuing audio generation:", error);
+      // console.error("Error continuing audio generation:", error);
       return res.status(500).json({
         success: false,
         message: "Failed to continue audio generation",
@@ -210,7 +210,7 @@ const continueAudioCreation = async (req, res) => {
  * Generate audio in background with progress tracking and retry mechanism
  */
 const generateAudioInBackground = async (ebook, audioCollection, options) => {
-  console.log(`Starting audio generation for ebook: ${ebook._id}`);
+  // console.log(`Starting audio generation for ebook: ${ebook._id}`);
   
   try {
     await audioCollection.updateOne({ 
@@ -240,7 +240,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
         }
       });
       
-      console.log(`Ebook ${ebook._id} not ready yet. Waiting before retry ${retryCount + 1}/${MAX_RETRIES}`);
+      // console.log(`Ebook ${ebook._id} not ready yet. Waiting before retry ${retryCount + 1}/${MAX_RETRIES}`);
       
       // Exponential backoff: wait longer between each retry
       const waitTime = 5000 * Math.pow(2, retryCount); // 5s, 10s, 20s
@@ -313,7 +313,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
         
         if (useGpt4oAudio) {
           // GPT-4o audio generation for head section
-          console.log(`Using GPT-4o audio generation for head section: ${headSection.title}`);
+          // console.log(`Using GPT-4o audio generation for head section: ${headSection.title}`);
           
           // Create content object with section content and title
           const sectionContent = {
@@ -336,7 +336,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
             options.voiceActorsArray
           );
           
-          console.log(`Generated audio for head section: ${headSection.title}`);
+          // console.log(`Generated audio for head section: ${headSection.title}`);
           
           // Process each subsection separately
           for (let j = 0; j < subSections.length; j++) {
@@ -352,7 +352,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
               }
             });
             
-            console.log(`Using GPT-4o audio generation for subsection: ${subSection.title}`);
+            // console.log(`Using GPT-4o audio generation for subsection: ${subSection.title}`);
             
             // Create content object with subsection content and relation to head section
             const subSectionContent = {
@@ -376,7 +376,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
               options.voiceActorsArray
             );
             
-            console.log(`Generated audio for subsection: ${subSection.title}`);
+            // console.log(`Generated audio for subsection: ${subSection.title}`);
           }
         } else {
           // Traditional text-to-speech method would be modified similarly...
@@ -418,7 +418,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
               options.voiceActorsArray
             );
             
-            console.log(`Generated audio for head section: ${headSection.title}`);
+            // console.log(`Generated audio for head section: ${headSection.title}`);
           }
           
           // Now process each subsection separately
@@ -442,7 +442,7 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
         });
       } catch (sectionError) {
         // Error handling remains similar
-        console.error(`Error processing audio for section ${headSection.title}:`, sectionError);
+        // console.error(`Error processing audio for section ${headSection.title}:`, sectionError);
         await audioCollection.updateOne({
           $set: {
             processingStatus: `Error processing section ${i+1}: ${sectionError.message}. Continuing with next section.`
@@ -472,10 +472,10 @@ const generateAudioInBackground = async (ebook, audioCollection, options) => {
       }
     });
     
-    console.log(`Audio generation complete for collection ${audioCollection._id}`);
+    // console.log(`Audio generation complete for collection ${audioCollection._id}`);
     
   } catch (error) {
-    console.error(`Audio generation failed for ebook ${ebook._id}:`, error);
+    // console.error(`Audio generation failed for ebook ${ebook._id}:`, error);
     
     // Update collection with error status
     await AudioCollection.findByIdAndUpdate(audioCollection._id, {
@@ -638,7 +638,7 @@ const getAllCollections = async (req, res) => {
     });
   } catch (error) {
     // Handle errors
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -671,9 +671,9 @@ async function moveCollectionToStart(userId, collectionId) {
     // Save the updated user document
     await user.save();
 
-    console.log("Collection moved to the start successfully");
+    // console.log("Collection moved to the start successfully");
   } catch (error) {
-    console.error("Error moving collection to start:", error);
+    // console.error("Error moving collection to start:", error);
   }
 }
 
@@ -722,7 +722,7 @@ const getAudioByCollectionId = async (req, res) => {
     res.status(200).json(audios);
   } catch (error) {
     // Handle errors
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -793,7 +793,7 @@ const getAllCollectionsByUser = async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     // Handle errors
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -871,7 +871,7 @@ const authorizeUserToPlayCollection = async (req, res) => {
     });
   } catch (error) {
     // Handle errors
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -920,7 +920,7 @@ const createAuthorizationTokenForCollection = async (req, res) => {
     res.status(200).json({ token });
   } catch (error) {
     // Handle errors
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

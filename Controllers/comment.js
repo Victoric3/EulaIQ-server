@@ -48,7 +48,7 @@ const addNewCommentToStory = async (req, res, next) => {
       data: comment
     });
   } catch (error) {
-    console.error("Error in addNewCommentToStory:", error);
+    // console.error("Error in addNewCommentToStory:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to add comment",
@@ -99,7 +99,7 @@ const getRepliesForComment = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching replies:', error);
+    // console.error('Error fetching replies:', error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch replies",
@@ -154,7 +154,7 @@ const getAllCommentByStory = async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error("Error in getAllCommentByStory:", error);
+    // console.error("Error in getAllCommentByStory:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch comments",
@@ -264,7 +264,7 @@ const commentLike = async (req, res, next) => {
         return await attemptUpdate();
       }
 
-      console.error("Error in commentLike:", error);
+      // console.error("Error in commentLike:", error);
       return res.status(500).json({
         success: false,
         message: "Internal server error",
@@ -301,7 +301,7 @@ const getCommentLikeStatus = async (req, res, next) => {
       likeStatus: likeStatus
     });
   } catch (error) {
-    console.error("Error in getCommentLikeStatus:", error);
+    // console.error("Error in getCommentLikeStatus:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to get like status",

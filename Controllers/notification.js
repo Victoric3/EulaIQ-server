@@ -36,7 +36,7 @@ const registerDevice = async (req, res) => {
       message: 'Device registered successfully'
     });
   } catch (error) {
-    console.error('Device registration error:', error);
+    // console.error('Device registration error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to register device'
@@ -72,7 +72,7 @@ const sendNotification = async (req, res) => {
       data: response
     });
   } catch (error) {
-    console.error('Send notification error:', error);
+    // console.error('Send notification error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to send notification'
@@ -93,7 +93,7 @@ const getNotificationHistory = async (req, res) => {
       data: notifications
     });
   } catch (error) {
-    console.error('Get notifications error:', error);
+    // console.error('Get notifications error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch notifications'
