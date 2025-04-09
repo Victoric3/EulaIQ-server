@@ -1,5 +1,5 @@
-const { fetchSavedFile } = require('../Helpers/file/saveFile');
 const Email = require('../Helpers/Libraries/email');
+const axios = require('axios'); // Make sure axios is installed: npm install axios --save
 
 /**
  * Handle beta program registration
@@ -19,7 +19,6 @@ const registerForBeta = async (req, res) => {
     }
 
     // Create a user object for the email template
-    // This mimics the structure expected by the Email class
     const user = {
       email,
       firstname: fullName.split(' ')[0] // Extract first name from full name
@@ -28,8 +27,27 @@ const registerForBeta = async (req, res) => {
     // Direct Google Drive link for the app download
     const downloadUrl = "https://drive.google.com/file/d/1veuoD1150km3zarDmUuVFcydiMAAJDCf/view?usp=sharing";
     
-    // Send welcome email with beta program information using the correct method
-    // Pass the URL directly to the constructor as second parameter
+    // Define Google Sheet submission URL
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyAeJRU_5lE93Ao8wrtQWnC1VSz0ftKa_4RxLe9ME1Qp2XKJCz1QMVMzfOxlQqK3Wda/exec';
+    
+    // Submit to Google Sheets
+    try {
+      await axios.post(SHEET_URL, {
+        timestamp: new Date().toISOString(),
+        fullName: fullName,
+        email: email
+      }, {
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        }
+      });
+      console.log('User saved to Google Sheet successfully');
+    } catch (sheetError) {
+      console.error('Error saving to Google Sheet:', sheetError.message);
+      // We'll continue even if Google Sheet fails, to ensure user gets their email
+    }
+    
+    // Send welcome email with beta program information
     await new Email(user, downloadUrl).sendBetaAccess();
 
     // Return success response
