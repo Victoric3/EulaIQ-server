@@ -87,7 +87,7 @@ jobs:
 
       - name: Stop Azure Web App before deployment
         run: |
-          az webapp stop --name EulaIQ-Api --resource-group your-resource-group-name
+          az webapp stop --name EulaIQ-Api --resource-group EulaIQ-Server
           # Wait a moment for the app to fully stop
           sleep 10
         continue-on-error: true
@@ -103,5 +103,5 @@ jobs:
 
       - name: Start Azure Web App after deployment
         run: |
-          az webapp start --name EulaIQ-Api --resource-group your-resource-group-name
+          az webapp start --name EulaIQ-Api --resource-group EulaIQ-Server
         continue-on-error: true
