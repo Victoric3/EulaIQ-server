@@ -30,8 +30,28 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      - name: Create deployment package
+        run: |
+          # Create a clean deployment directory
+          mkdir deployment
+          
+          # Copy necessary files (adjust as needed for your application)
+          cp -r package*.json ./deployment/
+          cp -r node_modules ./deployment/ 2>/dev/null || true
+          cp -r server.js ./deployment/ || true
+          cp -r index.js ./deployment/ || true
+          cp -r app.js ./deployment/ || true
+          cp -r Models ./deployment/ || true
+          cp -r Controllers ./deployment/ || true
+          cp -r Routers ./deployment/ || true
+          cp -r Middlewares ./deployment/ || true
+          cp -r Helpers ./deployment/ || true
+          cp -r data ./deployment/ || true
+          cp -r public ./deployment/ 2>/dev/null || true
+          cp -r dist ./deployment/ 2>/dev/null || true
+          
+          # Create a smaller zip with only required files
+          cd deployment && zip -r ../release.zip ./* && cd ..
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -65,9 +85,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3BADDA795BBF415B9749AC67A4425166 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AE26D494972F474EB74E28A44D1611F6 }}
 
+      - name: Stop Azure Web App before deployment
+        run: |
+          az webapp stop --name EulaIQ-Api --resource-group your-resource-group-name
+          # Wait a moment for the app to fully stop
+          sleep 10
+        continue-on-error: true
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'EulaIQ-Api'
+          publish-profile: ${{ secrets.AZUREWEBAPP_PUBLISHPROFILE }}
           package: .
+          clean: true
+
+      - name: Start Azure Web App after deployment
+        run: |
+          az webapp start --name EulaIQ-Api --resource-group your-resource-group-name
+        continue-on-error: true
