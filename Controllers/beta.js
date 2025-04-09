@@ -1,5 +1,5 @@
 const Email = require('../Helpers/Libraries/email');
-const axios = require('axios'); // Make sure axios is installed: npm install axios --save
+const axios = require('axios');
 
 /**
  * Handle beta program registration
