@@ -1,5 +1,6 @@
 const Email = require('../Helpers/Libraries/email');
 const axios = require('axios');
+const { fetchSavedFile } = require('../Helpers/file/saveFile');
 
 /**
  * Handle beta program registration
@@ -24,8 +25,9 @@ const registerForBeta = async (req, res) => {
       firstname: fullName.split(' ')[0] // Extract first name from full name
     };
 
-    // Direct Google Drive link for the app download
-    const downloadUrl = "https://drive.google.com/file/d/1veuoD1150km3zarDmUuVFcydiMAAJDCf/view?usp=sharing";
+    // Generate a download URL that points to our API endpoint
+    // We'll encode the user's email to verify their identity when downloading
+    const downloadUrl = `${process.env.API_URL || 'https://api.eulaiq.com'}/api/v1/beta/download?email=${encodeURIComponent(email)}`;
     
     // Define Google Sheet submission URL
     const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyAeJRU_5lE93Ao8wrtQWnC1VSz0ftKa_4RxLe9ME1Qp2XKJCz1QMVMzfOxlQqK3Wda/exec';
@@ -61,7 +63,7 @@ const registerForBeta = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "An error occurred during beta registration",
-      error: process.env.NODE_ENV === "developement" ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
 };
@@ -73,9 +75,32 @@ const registerForBeta = async (req, res) => {
  */
 const downloadBetaApp = async (req, res) => {
   try {
-    // Redirect to Google Drive instead of trying to serve the file
-    return res.redirect("https://drive.google.com/file/d/1veuoD1150km3zarDmUuVFcydiMAAJDCf/view?usp=sharing");
+    const { email } = req.query;
+
+    // Location of the app file in Azure storage
+    const appFileUrl = "https://kingsheartebook.blob.core.windows.net/ebook/app-release.apk";
     
+    try {
+      // Use fetchSavedFile to get the file with a valid SAS token
+      const fileResponse = await fetchSavedFile(appFileUrl);
+      
+      // Set appropriate headers for file download
+      res.setHeader('Content-Disposition', `attachment; filename="EulaIQ-Beta.apk"`);
+      res.setHeader('Content-Type', fileResponse.file.contentType || 'application/vnd.android.package-archive');
+      res.setHeader('Content-Length', fileResponse.file.contentLength);
+      
+      // Send the file
+      return res.send(Buffer.from(fileResponse.file.buffer));
+    } catch (fileError) {
+      console.error("Error fetching app file:", fileError);
+      
+      // Fallback to redirect to the URL directly if fetchSavedFile fails
+      // (this will only work if the blob has public read access)
+      return res.status(500).json({
+        success: false,
+        message: "Unable to download the app at this time. Please contact support@eulaiq.com for assistance."
+      });
+    }
   } catch (error) {
     console.error("Beta app download error:", error);
     return res.status(500).json({
