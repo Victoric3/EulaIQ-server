@@ -14,7 +14,7 @@ const notificationRoutes = require('./notification');
 const examRoute = require("./exam");
 const youtubeDataAnal = require("./youtubeDataAnal");
 const audio = require("./audio");
-
+const betaRouter = require("./beta");
 
 router.use('/notifications', notificationRoutes);
 router.use("/auth", authRoute);
@@ -28,5 +28,6 @@ router.use("/", sitemapRoute);
 router.use("/exam", examRoute);
 router.use("/youtube", youtubeDataAnal);
 router.use("/audio", audio);
+router.use("/beta", betaRouter);
 
 module.exports = router;

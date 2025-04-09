@@ -94,4 +94,12 @@ module.exports = class Email {
       "Complete your account setup by verifying your email address."
     );
   }
+
+  async sendBetaAccess() {
+    await this.send(
+      "betaAccess",
+      `Join the ${process.env.SITE_NAME} Beta Program`,
+      "You've been accepted into our exclusive beta testing program!"
+    );
+  }
 };
