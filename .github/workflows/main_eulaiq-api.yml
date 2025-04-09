@@ -41,10 +41,12 @@ jobs:
           cp -r Routers ./deployment/ || true
           cp -r Middlewares ./deployment/ || true
           cp -r Helpers ./deployment/ || true
-          cp -r Services ./deployment/ || true  # Add this line to include Services directory
+          cp -r Services ./deployment/ || true
           cp -r data ./deployment/ || true
+          cp -r views ./deployment/ || true  # Add this line to include views directory with email templates
           cp -r public ./deployment/ 2>/dev/null || true
           cp -r dist ./deployment/ 2>/dev/null || true
+          cp -r config.env ./deployment/ 2>/dev/null || true  # Ensure config file is included
           # Zip the deployment folder
           cd deployment && zip -r ../release.zip ./* && cd ..
 

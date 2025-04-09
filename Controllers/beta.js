@@ -61,7 +61,7 @@ const registerForBeta = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "An error occurred during beta registration",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: process.env.NODE_ENV === "developement" ? error.message : undefined
     });
   }
 };
